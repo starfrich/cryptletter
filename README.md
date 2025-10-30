@@ -1,4 +1,9 @@
 # Cryptletter
+
+[![codecov](https://codecov.io/gh/starfrich/cryptletter/branch/main/graph/badge.svg)](https://codecov.io/gh/starfrich/cryptletter)
+[![CI](https://github.com/starfrich/cryptletter/actions/workflows/test-coverage.yml/badge.svg)](https://github.com/starfrich/cryptletter/actions/workflows/test-coverage.yml)
+
+
 Substack, rebuilt with FHE. Every newsletter encrypted, every access verified on-chain.
 
 > An idea by [Robapuros](https://x.com/robapuros), realized by Starfish.
