@@ -1,0 +1,115 @@
+@import "tailwindcss";
+@import "tailwindcss" layer(base);
+@import "tailwindcss" layer(components);
+@import "tailwindcss" layer(utilities);
+
+/* DaisyUI plugin */
+@plugin "daisyui";
+
+/* Custom Zama theme using DaisyUI v4+ syntax */
+@plugin "daisyui/theme" {
+  name: "zama";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  /* Base: Zama yellow palette */
+  --color-base-100: oklch(85% 0.22 90);   /* #FFD700 */
+  --color-base-200: oklch(88% 0.20 90);
+  --color-base-300: oklch(90% 0.18 90);
+  --color-base-content: oklch(0% 0 0);     /* Black text */
+
+  /* Primary: black */
+  --color-primary: oklch(0% 0 0);
+  --color-primary-content: oklch(100% 0 0);
+
+  /* Secondary: yellow */
+  --color-secondary: oklch(85% 0.22 90);
+  --color-secondary-content: oklch(0% 0 0);
+
+  /* Accent & neutral */
+  --color-accent: oklch(0% 0 0);
+  --color-accent-content: oklch(100% 0 0);
+  --color-neutral: oklch(15% 0.01 0);
+  --color-neutral-content: oklch(98% 0 0);
+
+  /* Semantic colors — all black for consistency */
+  --color-info: oklch(0% 0 0);
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(0% 0 0);
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(0% 0 0);
+  --color-warning-content: oklch(100% 0 0);
+  --color-error: oklch(0% 0 0);
+  --color-error-content: oklch(100% 0 0);
+
+  /* Radius & spacing */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* Custom CSS variables (keep your existing ones) */
+@theme {
+  --shadow-center: 0 0 12px -2px rgb(0 0 0 / 0.05);
+  --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Compatibility layer for Tailwind v4 (border color fix) */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  p {
+    margin: 1rem 0;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: "Telegraf", ui-sans-serif, system-ui, -apple-system, Segoe UI,
+      Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial,
+      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    background-color: oklch(88% 0.20 90); /* fallback to base-200 */
+    color: oklch(0% 0 0);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+}
+
+/* Global component tweaks */
+:root,
+[data-theme] {
+  background: var(--color-base-200);
+}
+
+.btn {
+  @apply shadow-md;
+}
+
+.btn.btn-ghost {
+  @apply shadow-none;
+}
+
+.link {
+  text-underline-offset: 2px;
+}
+
+.link:hover {
+  opacity: 80%;
+}

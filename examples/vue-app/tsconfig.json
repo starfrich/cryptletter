@@ -1,0 +1,39 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": false,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "preserve",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    /* Path mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@fhevm-sdk": ["../../packages/fhevm-sdk"],
+      "@fhevm-sdk/vue": ["../../packages/fhevm-sdk/dist/vue"],
+      "@fhevm-sdk/react": ["../../packages/fhevm-sdk/dist/react"],
+      "@fhevm-sdk/storage": ["../../packages/fhevm-sdk/dist/storage"],
+      "@fhevm-sdk/core": ["../../packages/fhevm-sdk/dist/core"],
+      "@fhevm-sdk/utils": ["../../packages/fhevm-sdk/dist/utils"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+}

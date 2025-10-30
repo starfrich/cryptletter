@@ -1,0 +1,24 @@
+{
+  "name": "@fhevm-examples/vanilla-js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 5175"
+  },
+  "dependencies": {
+    "@fhevm-sdk": "workspace:*",
+    "buffer": "^6.0.3",
+    "ethers": "^6.13.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.0.15",
+    "autoprefixer": "^10.4.21",
+    "daisyui": "5.0.9",
+    "postcss": "~8.4.49",
+    "prettier": "~3.5.3",
+    "tailwindcss": "4.1.3",
+    "vite": "^5.4.10"
+  }
+}

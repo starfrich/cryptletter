@@ -1,0 +1,250 @@
+<!doctype html>
+<html data-theme="zama">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FHEVM Vanilla JS Example</title>
+  </head>
+  <body class="min-h-screen bg-base-100 flex flex-col">
+    <!-- Header Navbar -->
+    <header class="navbar bg-base-200 border-b border-base-300 sticky top-0 z-50">
+      <div class="navbar-start">
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl font-bold text-primary">
+            ⚡ FHEVM Vanilla JS
+          </h1>
+        </div>
+      </div>
+      <div class="navbar-end">
+        <!-- Wallet Connect Section (Right Side) -->
+        <div id="wallet-connect-container" class="flex items-center gap-2">
+          <!-- Connected State -->
+          <div id="connected-state" class="hidden flex items-center gap-2">
+            <!-- Network Switcher Dropdown -->
+            <div class="dropdown dropdown-end">
+              <div tabindex="0" role="button" class="btn btn-sm gap-2" id="network-dropdown-btn">
+                <span class="badge badge-sm" id="network-icon-badge">🔗</span>
+                <span id="network-name">Chain</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+              <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-200 rounded-box w-52 mt-1 z-10">
+                <li>
+                  <button id="switch-localhost" class="network-switch-item" data-chain-id="31337">
+                    <span class="badge badge-sm badge-secondary">🏠</span>
+                    Localhost
+                    <span class="ml-auto network-check hidden">✓</span>
+                  </button>
+                </li>
+                <li>
+                  <button id="switch-sepolia" class="network-switch-item" data-chain-id="11155111">
+                    <span class="badge badge-sm badge-accent">🌐</span>
+                    Sepolia
+                    <span class="ml-auto network-check hidden">✓</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Address Badge -->
+            <div class="badge badge-lg gap-1">
+              <span class="text-lg">👤</span>
+              <span id="short-address"></span>
+            </div>
+
+            <!-- Disconnect Button -->
+            <button id="disconnect" class="btn btn-outline btn-sm">
+              Disconnect
+            </button>
+          </div>
+
+          <!-- Disconnected State -->
+          <div id="disconnected-state" class="flex flex-col items-center gap-2">
+            <button id="connect" class="btn btn-primary">
+              <span id="connect-spinner" class="hidden loading loading-spinner loading-sm"></span>
+              <span id="connect-text">Connect Wallet</span>
+            </button>
+            <div id="error-message" class="hidden alert alert-error alert-sm">
+              <span id="error-text"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4 md:p-8">
+      <div class="container mx-auto max-w-6xl">
+        <!-- Global Error Alert (hidden by default) -->
+        <div id="global-error-alert" class="hidden alert alert-error shadow-lg mb-4">
+          <div class="flex flex-col w-full">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-2xl">⚠️</span>
+              <div>
+                <h3 class="font-bold">Operation Error</h3>
+              </div>
+            </div>
+            <p id="error-alert-message" class="text-sm mb-2">An error occurred. Please try again.</p>
+            <div class="flex gap-2">
+              <button id="error-alert-retry" class="btn btn-sm btn-outline hidden">Retry</button>
+              <button id="error-alert-dismiss" class="btn btn-sm btn-ghost">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation Errors Alert (hidden by default) -->
+        <div id="validation-alert" class="hidden alert alert-warning shadow-lg mb-4">
+          <div class="flex flex-col w-full">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-2xl">🔍</span>
+              <h3 class="font-bold">Validation Issues</h3>
+            </div>
+            <div id="validation-errors-list" class="text-sm space-y-1">
+              <!-- Validation errors will be listed here -->
+            </div>
+            <button id="validation-alert-dismiss" class="btn btn-sm btn-ghost mt-2 w-fit">Dismiss</button>
+          </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-3xl justify-center mb-2">🔐 FHE Counter Demo</h2>
+            <p class="text-center text-base-content/70 mb-6">Fully Homomorphic Encryption on Ethereum</p>
+
+            <!-- Debug Toggle Button - Under title like Next.js & Vue -->
+            <div class="flex justify-center mb-6 gap-2 flex-wrap">
+              <button id="debug-toggle" class="btn btn-md gap-2" title="Toggle debug mode">
+                <span id="debug-icon">🐛</span>
+                <span id="debug-text">Debug OFF</span>
+              </button>
+            </div>
+
+            <!-- FHEVM Instance Status -->
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold mb-3">FHEVM Instance</h3>
+              <div class="badge badge-lg" id="fhevm-status-badge">
+                <span id="fhevm-status-spinner" class="loading loading-spinner loading-xs mr-1"></span>
+                <span id="fhevm-status-text">Waiting for wallet connection...</span>
+              </div>
+              <p id="fhevm-error" class="text-error text-sm mt-2 hidden"></p>
+            </div>
+
+            <!-- Main Content (Hidden until wallet connected and FHEVM ready) -->
+            <div id="main-content" class="hidden space-y-6">
+              <!-- Counter Display -->
+              <div class="bg-base-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-4">Counter Value</h3>
+
+                <!-- Encrypted Handle -->
+                <div class="mb-4">
+                  <label class="label">
+                    <span class="label-text font-medium">Encrypted Handle:</span>
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <code id="handle-display" class="flex-1 bg-base-300 px-3 py-2 rounded text-xs">No handle yet</code>
+                    <button id="refresh-handle" class="btn btn-ghost btn-sm" disabled>
+                      <span id="refresh-spinner" class="hidden loading loading-spinner loading-xs"></span>
+                      <span id="refresh-text">🔄</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Decrypted Value -->
+                <div class="text-center">
+                  <label class="label">
+                    <span class="label-text font-medium">Decrypted Value:</span>
+                  </label>
+                  <div id="decrypted-section" class="text-center">
+                    <div class="text-4xl font-bold text-base-content/50 my-4">🔒 Encrypted</div>
+                    <button id="decrypt" class="btn btn-primary">
+                      <span id="decrypt-spinner" class="hidden loading loading-spinner loading-sm"></span>
+                      <span id="decrypt-text">Decrypt</span>
+                    </button>
+                  </div>
+                  <div id="decrypted-value-display" class="hidden text-center">
+                    <div class="text-6xl font-bold text-primary my-4" id="decrypted-value">0</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Counter Controls -->
+              <div class="bg-base-200 rounded-lg p-6">
+                <h4 class="text-lg font-semibold mb-4">Update Counter</h4>
+
+                <!-- Input Field -->
+                <div class="form-control mb-4">
+                  <label class="label">
+                    <span class="label-text font-medium">Increment/Decrement Value:</span>
+                  </label>
+                  <input
+                    id="counter-input"
+                    type="number"
+                    value="1"
+                    min="-100"
+                    max="100"
+                    class="input input-bordered"
+                  />
+                </div>
+
+                <!-- Quick Action Buttons -->
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                  <button id="btn-plus-1" class="btn btn-success">+1</button>
+                  <button id="btn-plus-5" class="btn btn-success">+5</button>
+                  <button id="btn-minus-1" class="btn btn-error">-1</button>
+                  <button id="btn-minus-5" class="btn btn-error">-5</button>
+                </div>
+
+                <!-- Custom Update Button -->
+                <button id="update-counter" class="btn btn-primary w-full">
+                  <span id="update-spinner" class="hidden loading loading-spinner loading-sm"></span>
+                  <span id="update-text">Update Counter</span>
+                </button>
+              </div>
+
+              <!-- Status Message -->
+              <div id="status-message" class="hidden alert">
+                <span id="status-text"></span>
+              </div>
+            </div>
+
+            <!-- Not Connected State -->
+            <div id="not-connected-state" class="text-center py-8 text-base-content/60">
+              <p>👆 Please connect your wallet to interact with the FHE Counter</p>
+            </div>
+
+            <!-- Wrong Network State -->
+            <div id="wrong-network-state" class="hidden alert alert-warning">
+              <span>⚠️ Please switch to Hardhat Local (31337) or Sepolia (11155111)</span>
+            </div>
+          </div>
+
+          <!-- Activity Log (Console) -->
+          <div class="card bg-base-200 shadow-xl mt-6">
+            <div class="card-body">
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="card-title text-primary">📝 Activity Log</h3>
+                <button id="clear-logs" class="btn btn-sm btn-ghost" title="Clear activity log">
+                  🗑️ Clear
+                </button>
+              </div>
+              <div class="mockup-code bg-black p-4 rounded max-h-96 overflow-y-auto text-xs font-mono">
+                <pre style="color: #00ff00;"><code id="log">Ready to start...</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer footer-center p-4 bg-base-200 text-base-content border-t border-base-300">
+      <aside>
+        <p>Built with <a href="https://docs.zama.ai/protocol" target="_blank" rel="noopener" class="link link-primary">Zama FHEVM</a> • <a href="https://github.com/zama-ai/fhevm-react-template" target="_blank" rel="noopener" class="link link-primary">GitHub</a></p>
+        <p class="text-sm text-base-content/60">FHEVM SDK Vanilla JS Example</p>
+      </aside>
+    </footer>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

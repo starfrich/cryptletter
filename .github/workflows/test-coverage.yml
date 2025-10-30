@@ -1,0 +1,52 @@
+name: SDK Coverage
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/fhevm-sdk/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'packages/fhevm-sdk/**'
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: SDK Test Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build SDK
+        run: pnpm sdk:build
+
+      - name: Run tests with coverage
+        run: pnpm sdk:test
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
