@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - 'packages/fhevm-sdk/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
