@@ -1,7 +1,8 @@
 # Cryptletter
 
-[![codecov](https://codecov.io/gh/starfrich/cryptletter/branch/main/graph/badge.svg)](https://codecov.io/gh/starfrich/cryptletter)
-[![SDK Coverage](https://github.com/starfrich/cryptletter/actions/workflows/test-coverage.yml/badge.svg)](https://github.com/starfrich/cryptletter/actions/workflows/test-coverage.yml)
+[![codecov](https://codecov.io/gh/starfrich/fhevm-react-template/branch/main/graph/badge.svg)](https://codecov.io/gh/starfrich/fhevm-react-template)
+[![CI](https://github.com/starfrich/fhevm-react-template/actions/workflows/test-coverage.yml/badge.svg)](https://github.com/starfrich/fhevm-react-template/actions/workflows/test-coverage.yml)
+
 
 Substack, rebuilt with FHE. Every newsletter encrypted, every access verified on-chain.
 
