@@ -15,13 +15,13 @@ A comprehensive, zero-config SDK for building privacy-preserving applications wi
 
 ## Quick Start
 
-> **Note**: This SDK is currently part of the [fhevm-react-template](https://github.com/zama-ai/fhevm-react-template) monorepo and is not yet published to npm. To use it, clone the template repository.
+> **Note**: This SDK is currently part of the [fhevm-react-template](https://github.com/starfrich/fhevm-react-template) monorepo and is not yet published to npm. To use it, clone the template repository.
 
 ### Installation
 
 ```bash
 # Clone the template repository
-git clone https://github.com/zama-ai/fhevm-react-template
+git clone https://github.com/starfrich/fhevm-react-template
 cd fhevm-react-template
 
 # Install dependencies
