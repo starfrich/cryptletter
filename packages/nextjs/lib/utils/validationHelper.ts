@@ -4,18 +4,17 @@
  * Input validation for FHEVM operations.
  * Wraps SDK validation utilities with Next.js-specific logic.
  */
-
+import type { FhevmEncryptedType } from "@fhevm-sdk/core";
 import {
-  isValidAddress,
   assertValidAddress,
-  isValidFhevmType,
-  assertValidFhevmType,
-  validateEncryptionValue,
   assertValidEncryptionValue,
+  assertValidFhevmType,
+  isValidAddress,
+  isValidFhevmType,
   isValidStorageKey,
   isValidStorageValue,
+  validateEncryptionValue,
 } from "@fhevm-sdk/utils";
-import type { FhevmEncryptedType } from "@fhevm-sdk/core";
 
 /**
  * Validate an Ethereum address
@@ -79,10 +78,7 @@ export function assertFhevmType(type: unknown): void {
  * }
  * ```
  */
-export function validateEncryptionValueForType(
-  value: unknown,
-  type: FhevmEncryptedType
-): boolean {
+export function validateEncryptionValueForType(value: unknown, type: FhevmEncryptedType): boolean {
   return validateEncryptionValue(value, type);
 }
 
@@ -93,10 +89,7 @@ export function validateEncryptionValueForType(
  * @param type - FHEVM type
  * @throws Error if validation fails
  */
-export function assertEncryptionValue(
-  value: unknown,
-  type: FhevmEncryptedType
-): void {
+export function assertEncryptionValue(value: unknown, type: FhevmEncryptedType): void {
   assertValidEncryptionValue(value, type);
 }
 
@@ -127,9 +120,6 @@ export function validateStorageValueFormat(value: unknown): boolean {
  * @param value - Storage value to validate
  * @returns true if both are valid, false otherwise
  */
-export function validateStorageKeyValue(
-  key: unknown,
-  value: unknown
-): boolean {
+export function validateStorageKeyValue(key: unknown, value: unknown): boolean {
   return isValidStorageKey(key) && isValidStorageValue(value);
 }

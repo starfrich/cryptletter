@@ -11,6 +11,8 @@ export default defineConfig({
     environmentMatchGlobs: [
       ["test/react/**", "jsdom"],
       ["test/vue/**", "jsdom"],
+      ["test/utils/encryption.test.ts", "jsdom"],
+      ["test/utils/ipfs.test.ts", "jsdom"],
     ],
     coverage: {
       provider: "v8",

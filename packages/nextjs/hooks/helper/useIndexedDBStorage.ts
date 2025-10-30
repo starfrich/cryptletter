@@ -9,21 +9,18 @@
  * ```tsx
  * const { storage } = useIndexedDBStorage();
  *
- * const fheCounter = useFHECounterWagmi({
+ * // Use with any FHEVM hook that accepts storage
+ * const hook = useSomeHook({
  *   instance: fhevmInstance,
  *   storage, // Use IndexedDB instead of in-memory
  * });
  * ```
  */
-
 import { useEffect, useState } from "react";
-import { createStorage, type IFhevmStorage } from "@fhevm-sdk";
-import { startPerformanceTimer, logDebug, logWarn, logError } from "~/lib/utils";
+import { type IFhevmStorage, createStorage } from "@fhevm-sdk";
+import { logDebug, logError, logWarn, startPerformanceTimer } from "~/lib/utils";
 
-export function useIndexedDBStorage(options?: {
-  dbName?: string;
-  storeName?: string;
-}) {
+export function useIndexedDBStorage(options?: { dbName?: string; storeName?: string }) {
   const [storage, setStorage] = useState<IFhevmStorage | undefined>(undefined);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<Error | undefined>(undefined);

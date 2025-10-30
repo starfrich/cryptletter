@@ -4,107 +4,436 @@
  */
 import { GenericContractsDeclaration } from "~~/utils/helper/contract";
 
-export const deployedContracts = {
-  31337: {
-    FHECounter: {
-      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      abi: [
-        {
-          inputs: [
-            {
-              internalType: "externalEuint32",
-              name: "inputEuint32",
-              type: "bytes32",
-            },
-            {
-              internalType: "bytes",
-              name: "inputProof",
-              type: "bytes",
-            },
-          ],
-          name: "decrement",
-          outputs: [],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [],
-          name: "getCount",
-          outputs: [
-            {
-              internalType: "euint32",
-              name: "",
-              type: "bytes32",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "externalEuint32",
-              name: "inputEuint32",
-              type: "bytes32",
-            },
-            {
-              internalType: "bytes",
-              name: "inputProof",
-              type: "bytes",
-            },
-          ],
-          name: "increment",
-          outputs: [],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [],
-          name: "protocolId",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256",
-            },
-          ],
-          stateMutability: "pure",
-          type: "function",
-        },
-      ],
-      inheritedFunctions: {},
-      deployedOnBlock: 3,
-    },
-  },
+const deployedContracts = {
   11155111: {
-    FHECounter: {
-      address: "0xA25a9Cbae6a9ea52F25259c1D850C30a9FbA4A3A",
+    Cryptletter: {
+      address: "0x321862AC3C5c0A6A8Ec169703C228c517C944bc2",
       abi: [
+        {
+          inputs: [],
+          name: "AlreadyRegistered",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "InsufficientPayment",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "InvalidInput",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "InvalidPrice",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "NoActiveSubscription",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "NotRegistered",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "SubscriptionExpired",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "Unauthorized",
+          type: "error",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "name",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "bio",
+              type: "string",
+            },
+          ],
+          name: "CreatorProfileUpdated",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "name",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "monthlyPrice",
+              type: "uint256",
+            },
+          ],
+          name: "CreatorRegistered",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "oldPrice",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "newPrice",
+              type: "uint256",
+            },
+          ],
+          name: "MonthlyPriceUpdated",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "postId",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "title",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "contentCID",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "bool",
+              name: "isPublic",
+              type: "bool",
+            },
+          ],
+          name: "NewsletterPublished",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "subscriber",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "expiresAt",
+              type: "uint256",
+            },
+          ],
+          name: "Subscribed",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "subscriber",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+          ],
+          name: "SubscriptionCancelled",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "subscriber",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "newExpiresAt",
+              type: "uint256",
+            },
+          ],
+          name: "SubscriptionRenewed",
+          type: "event",
+        },
+        {
+          inputs: [],
+          name: "SUBSCRIPTION_DURATION",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
         {
           inputs: [
             {
-              internalType: "externalEuint32",
-              name: "inputEuint32",
-              type: "bytes32",
+              internalType: "uint256",
+              name: "postId",
+              type: "uint256",
             },
             {
-              internalType: "bytes",
-              name: "inputProof",
-              type: "bytes",
+              internalType: "address",
+              name: "user",
+              type: "address",
             },
           ],
-          name: "decrement",
+          name: "canAccessNewsletter",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "hasAccess",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+          ],
+          name: "cancelSubscription",
           outputs: [],
           stateMutability: "nonpayable",
           type: "function",
         },
         {
-          inputs: [],
-          name: "getCount",
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "creatorList",
           outputs: [
             {
-              internalType: "euint32",
+              internalType: "address",
               name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          name: "creators",
+          outputs: [
+            {
+              internalType: "string",
+              name: "name",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "bio",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "monthlyPrice",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "subscriberCount",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "isActive",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+          ],
+          name: "getCreator",
+          outputs: [
+            {
+              components: [
+                {
+                  internalType: "string",
+                  name: "name",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "bio",
+                  type: "string",
+                },
+                {
+                  internalType: "uint256",
+                  name: "monthlyPrice",
+                  type: "uint256",
+                },
+                {
+                  internalType: "uint256",
+                  name: "subscriberCount",
+                  type: "uint256",
+                },
+                {
+                  internalType: "bool",
+                  name: "isActive",
+                  type: "bool",
+                },
+              ],
+              internalType: "struct Cryptletter.Creator",
+              name: "",
+              type: "tuple",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getCreatorCount",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "offset",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "limit",
+              type: "uint256",
+            },
+          ],
+          name: "getCreators",
+          outputs: [
+            {
+              internalType: "address[]",
+              name: "",
+              type: "address[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "postId",
+              type: "uint256",
+            },
+          ],
+          name: "getDecryptionKey",
+          outputs: [
+            {
+              internalType: "euint256",
+              name: "encryptedKey",
               type: "bytes32",
             },
           ],
@@ -114,19 +443,171 @@ export const deployedContracts = {
         {
           inputs: [
             {
-              internalType: "externalEuint32",
-              name: "inputEuint32",
+              internalType: "uint256",
+              name: "postId",
+              type: "uint256",
+            },
+          ],
+          name: "getNewsletter",
+          outputs: [
+            {
+              components: [
+                {
+                  internalType: "string",
+                  name: "contentCID",
+                  type: "string",
+                },
+                {
+                  internalType: "euint256",
+                  name: "encryptedKey",
+                  type: "bytes32",
+                },
+                {
+                  internalType: "string",
+                  name: "title",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "preview",
+                  type: "string",
+                },
+                {
+                  internalType: "uint256",
+                  name: "publishedAt",
+                  type: "uint256",
+                },
+                {
+                  internalType: "bool",
+                  name: "isPublic",
+                  type: "bool",
+                },
+                {
+                  internalType: "address",
+                  name: "creator",
+                  type: "address",
+                },
+              ],
+              internalType: "struct Cryptletter.NewsletterPost",
+              name: "",
+              type: "tuple",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "subscriber",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+          ],
+          name: "getSubscriptionStatus",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "isActive",
+              type: "bool",
+            },
+            {
+              internalType: "uint256",
+              name: "expiresAt",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "subscribedAt",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "hasAccess",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "postId",
+              type: "uint256",
+            },
+          ],
+          name: "grantDecryptionPermission",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "newsletters",
+          outputs: [
+            {
+              internalType: "string",
+              name: "contentCID",
+              type: "string",
+            },
+            {
+              internalType: "euint256",
+              name: "encryptedKey",
               type: "bytes32",
             },
             {
-              internalType: "bytes",
-              name: "inputProof",
-              type: "bytes",
+              internalType: "string",
+              name: "title",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "preview",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "publishedAt",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "isPublic",
+              type: "bool",
+            },
+            {
+              internalType: "address",
+              name: "creator",
+              type: "address",
             },
           ],
-          name: "increment",
-          outputs: [],
-          stateMutability: "nonpayable",
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "postCounter",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
           type: "function",
         },
         {
@@ -142,9 +623,167 @@ export const deployedContracts = {
           stateMutability: "pure",
           type: "function",
         },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "contentCID",
+              type: "string",
+            },
+            {
+              internalType: "externalEuint256",
+              name: "inputEncryptedKey",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes",
+              name: "inputProof",
+              type: "bytes",
+            },
+            {
+              internalType: "string",
+              name: "title",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "preview",
+              type: "string",
+            },
+            {
+              internalType: "bool",
+              name: "isPublic",
+              type: "bool",
+            },
+          ],
+          name: "publishNewsletter",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "postId",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "name",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "bio",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "monthlyPrice",
+              type: "uint256",
+            },
+          ],
+          name: "registerCreator",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+          ],
+          name: "renewSubscription",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+          ],
+          name: "subscribe",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          name: "subscriptions",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "expiresAt",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "subscribedAt",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "isActive",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "newPrice",
+              type: "uint256",
+            },
+          ],
+          name: "updateMonthlyPrice",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "name",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "bio",
+              type: "string",
+            },
+          ],
+          name: "updateProfile",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 9395075,
+      deployedOnBlock: 9517722,
     },
   },
 } as const;

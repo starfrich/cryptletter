@@ -44,20 +44,6 @@
     "next:format": "pnpm --filter ./packages/nextjs format",
     "next:lint": "pnpm --filter ./packages/nextjs lint",
     "next:serve": "pnpm --filter ./packages/nextjs serve",
-    "vue:dev": "pnpm --filter ./examples/vue-app dev",
-    "vue:build": "pnpm --filter ./examples/vue-app build",
-    "vue:preview": "pnpm --filter ./examples/vue-app preview",
-    "vue:check-types": "pnpm --filter ./examples/vue-app type-check",
-    "vanilla:dev": "pnpm --filter ./examples/vanilla-js dev",
-    "vanilla:build": "pnpm --filter ./examples/vanilla-js build",
-    "vanilla:preview": "pnpm --filter ./examples/vanilla-js preview",
-    "backend:dev": "pnpm --filter ./examples/nodejs-backend dev",
-    "backend:type-check": "pnpm --filter ./examples/nodejs-backend type-check",
-    "backend:start": "pnpm --filter ./examples/nodejs-backend start",
-    "automation:start": "pnpm --filter ./examples/nodejs-automation start",
-    "automation:dev": "pnpm --filter ./examples/nodejs-automation dev",
-    "automation:task:decrypt": "pnpm --filter ./examples/nodejs-automation task:decrypt",
-    "automation:task:batch": "pnpm --filter ./examples/nodejs-automation task:batch",
     "precommit": "lint-staged",
     "preinstall": "pnpm sdk:build",
     "start": "pnpm --filter ./packages/nextjs dev",
@@ -69,7 +55,8 @@
     "verify:sepolia": "pnpm hardhat:verify:sepolia"
   },
   "dependencies": {
-    "hardhat-deploy": "^0.11.45"
+    "hardhat-deploy": "^0.11.45",
+    "isomorphic-dompurify": "^2.30.1"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",

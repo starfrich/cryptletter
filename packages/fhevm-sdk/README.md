@@ -4,14 +4,14 @@ A comprehensive, zero-config SDK for building privacy-preserving applications wi
 
 ## Features
 
-- 🔐 **Complete FHEVM Integration** - Full support for encrypted computation on Ethereum
-- ⚛️ **Framework Support** - React, Vue, and Node.js adapters with identical APIs
-- 🎯 **Zero Configuration** - Works out of the box with sensible defaults
-- 📝 **Type Safe** - Full TypeScript support with comprehensive type definitions
-- 🛡️ **Robust Error Handling** - Detailed error types with user-friendly recovery suggestions
-- ⚡ **Smart Retry Logic** - Automatic exponential backoff for transient failures
-- ✅ **Input Validation** - Comprehensive validation utilities with helpful error messages
-- 🐛 **Debug Logging** - Structured logging and performance monitoring
+- **Complete FHEVM Integration** - Full support for encrypted computation on Ethereum
+- **Framework Support** - React adapters with identical APIs
+- **Zero Configuration** - Works out of the box with sensible defaults
+- **Type Safe** - Full TypeScript support with comprehensive type definitions
+- **Robust Error Handling** - Detailed error types with user-friendly recovery suggestions
+- **Smart Retry Logic** - Automatic exponential backoff for transient failures
+- **Input Validation** - Comprehensive validation utilities with helpful error messages
+- **Debug Logging** - Structured logging and performance monitoring
 
 ## Quick Start
 
@@ -287,14 +287,7 @@ console.table(summary);
 - **[Error Handling](docs/ERROR_HANDLING.md)** - Error recovery strategies and patterns
 - **[Debug Logging](docs/DEBUG_LOGGING.md)** - Structured logging and performance monitoring
 - **[Input Validation](docs/VALIDATION.md)** - Validation best practices
-
-### Examples
-
-- [Next.js Counter](../../packages/nextjs) - Full React example with utils integration
-- [Vue 3 App](../../examples/vue-app) - Vue 3 example with Composition API
-- [Vanilla JS](../../examples/vanilla-js) - Vanilla JavaScript example
-- [Node.js Backend](../../examples/nodejs-backend) - Express.js backend API
-- [Node.js Automation](../../examples/nodejs-automation) - Scheduled tasks and automation
+- **[Cryptletter Hooks](docs/CRYPTLETTER_HOOKS.md)** - Complete guide to using Cryptletter React hooks for building encrypted newsletter applications with FHEVM
 
 ## API Reference
 
@@ -473,10 +466,6 @@ function ErrorBoundary({ error }: { error: Error }) {
 - Safari 15+
 - Edge 90+
 
-## Contribution
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
 ## License
 
 This project is licensed under the **BSD-3-Clause-Clear License**. See the [LICENSE](LICENSE) file for details.
@@ -486,14 +475,3 @@ This project is licensed under the **BSD-3-Clause-Clear License**. See the [LICE
 - 📚 [FHEVM Documentation](https://docs.zama.ai/protocol/solidity-guides/)
 - 💬 [Discord Community](https://discord.com/invite/zama)
 - 🐛 [GitHub Issues](https://github.com/zama-ai/fhevm-react-template/issues)
-
-## Changelog
-
-### Version 1.0.0
-
-- Initial release
-- Complete error handling utilities
-- Retry logic with exponential backoff
-- Input validation utilities
-- Debug logging and performance monitoring
-- React, Vue, and Node.js support

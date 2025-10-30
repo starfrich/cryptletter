@@ -8,9 +8,9 @@
 // Core functionality
 export * from "./types";
 export * from "./instance";
-export * from "./instance-node"; // Node.js-specific implementation
 export * from "./encryption";
 export * from "./decryption";
+export * from "./cryptletter";
 
 // Legacy exports for backwards compatibility
 // TODO: These should be removed in v2.0 once all consumers migrate to new API

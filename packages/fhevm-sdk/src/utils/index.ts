@@ -80,3 +80,49 @@ export {
   type DebugOptions,
   type PerformanceMetric,
 } from "./debug";
+
+// IPFS operations (Cryptletter)
+export {
+  IPFSClient,
+  createIPFSClient,
+  uploadToIPFS,
+  downloadFromIPFS,
+  pinContent,
+  unpinContent,
+  type IPFSConfig,
+  type IPFSUploadResponse,
+  type IPFSPinResponse,
+} from "./ipfs";
+
+// Encryption utilities (Cryptletter)
+export {
+  generateAESKey,
+  generateIV,
+  encryptContent,
+  decryptContent,
+  aesKeyToFHEInput,
+  fheOutputToAESKey,
+  serializeBundle,
+  deserializeBundle,
+  createPreview,
+  AES_KEY_SIZE,
+  AES_IV_SIZE,
+  AES_AUTH_TAG_SIZE,
+  ENCRYPTION_VERSION,
+  type NewsletterData,
+  type EncryptedBundle,
+} from "./encryption";
+
+// Image processing utilities (Cryptletter)
+export {
+  extractBase64ImagesFromJson,
+  base64ToUint8Array,
+  encryptImage,
+  decryptImage,
+  uploadImagesToIPFS,
+  replaceImagesInHtml,
+  replaceImagesInJson,
+  processNewsletterImages,
+  type ImageData,
+  type UploadedImage,
+} from "./imageProcessor";

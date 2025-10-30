@@ -19,13 +19,7 @@ const generatedContractComment = `
 
 const DEPLOYMENTS_DIR = "./packages/hardhat/deployments";
 const ARTIFACTS_DIR = "./packages/hardhat/artifacts";
-const TARGET_DIRS = [
-  "./packages/nextjs/contracts/",
-  "./examples/vue-app/src/contracts/",
-  "./examples/vanilla-js/src/",
-  "./examples/nodejs-backend/src/contracts/",
-  "./examples/nodejs-automation/src/contracts/",
-];
+const TARGET_DIR = "./packages/nextjs/contracts/";
 
 function getDirectories(path: string) {
   return fs
@@ -122,57 +116,21 @@ const generateTsAbis = async function () {
     return `${content}${parseInt(chainId).toFixed(0)}:${JSON.stringify(chainConfig, null, 2)},`;
   }, "");
 
-  // Generate for each target directory
-  for (const targetDir of TARGET_DIRS) {
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
-
-    // Determine the file type and format based on the target directory
-    const isNextJs = targetDir.includes("nextjs");
-    const isVanillaJs = targetDir.includes("vanilla-js");
-    const isVue = targetDir.includes("vue-app");
-
-    if (isVanillaJs) {
-      // Generate JavaScript file for vanilla-js
-      const fileName = `${targetDir}deployedContracts.js`;
-      const jsContent = `${generatedContractComment}
-
-export const deployedContracts = ${JSON.stringify(allContractsData, null, 2)};
-`;
-
-      fs.writeFileSync(
-        fileName,
-        await prettier.format(jsContent, {
-          parser: "babel",
-        }),
-      );
-
-      console.log(`📝 Updated JavaScript contract definition file on ${fileName}`);
-    } else {
-      // Generate TypeScript file for Next.js and Vue
-      const importStatement = isNextJs
-        ? `import { GenericContractsDeclaration } from "~~/utils/helper/contract";`
-        : "";
-
-      const typeExports = isNextJs
-        ? `export default deployedContracts satisfies GenericContractsDeclaration`
-        : `export type DeployedContracts = typeof deployedContracts\nexport type SupportedChainId = keyof DeployedContracts\nexport type ContractName = keyof DeployedContracts[SupportedChainId]`;
-
-      fs.writeFileSync(
-        `${targetDir}deployedContracts.ts`,
-        await prettier.format(
-          `${generatedContractComment} ${importStatement} \n\n
- export const deployedContracts = {${fileContent}} as const; \n\n ${typeExports}`,
-          {
-            parser: "typescript",
-          },
-        ),
-      );
-
-      console.log(`📝 Updated TypeScript contract definition file on ${targetDir}deployedContracts.ts`);
-    }
+  if (!fs.existsSync(TARGET_DIR)) {
+    fs.mkdirSync(TARGET_DIR);
   }
+  fs.writeFileSync(
+    `${TARGET_DIR}deployedContracts.ts`,
+    await prettier.format(
+      `${generatedContractComment} import { GenericContractsDeclaration } from "~~/utils/helper/contract"; \n\n
+ const deployedContracts = {${fileContent}} as const; \n\n export default deployedContracts satisfies GenericContractsDeclaration`,
+      {
+        parser: "typescript",
+      },
+    ),
+  );
+
+  console.log(`📝 Updated TypeScript contract definition file on ${TARGET_DIR}deployedContracts.ts`);
 };
 
 export default generateTsAbis;

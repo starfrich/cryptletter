@@ -256,16 +256,7 @@ async function resolve(
 export const createFhevmInstance = async (
   parameters: CreateFhevmInstanceParams
 ): Promise<FhevmInstance> => {
-  // Detect Node.js environment
-  const isNode = typeof window === "undefined" && typeof process !== "undefined";
-
-  if (isNode) {
-    // Use Node.js-specific implementation
-    const { createFhevmInstanceNode } = await import("./instance-node");
-    return createFhevmInstanceNode(parameters);
-  }
-
-  // Browser implementation continues below
+  // Browser implementation
   const throwIfAborted = () => {
     if (signal.aborted) throw new FhevmAbortError();
   };

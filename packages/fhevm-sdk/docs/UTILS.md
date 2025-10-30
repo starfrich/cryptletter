@@ -9,7 +9,10 @@ Comprehensive guide to using the FHEVM SDK utilities for error handling, retries
 3. [Retry Logic](#retry-logic)
 4. [Input Validation](#input-validation)
 5. [Debug Logging](#debug-logging)
-6. [Best Practices](#best-practices)
+6. [IPFS Operations](#ipfs-operations)
+7. [Image Processing](#image-processing)
+8. [Content Encryption](#content-encryption)
+9. [Best Practices](#best-practices)
 
 ## Overview
 
@@ -19,6 +22,9 @@ The FHEVM SDK provides a complete toolkit for building robust, production-ready 
 - **Retry Logic**: Exponential backoff with jitter for resilient operations
 - **Validation**: Type-safe input validation with helpful error messages
 - **Debug Logging**: Structured logging and performance monitoring
+- **IPFS Operations**: Upload, download, pin, and unpin content on IPFS (Cryptletter)
+- **Image Processing**: Extract, encrypt, and upload images from content (Cryptletter)
+- **Content Encryption**: AES encryption for newsletter content with FHE key management (Cryptletter)
 
 ### Quick Start
 
@@ -547,6 +553,463 @@ const formatted = formatObject(complex, 2);
 console.log(formatted);
 // {name: John, data: [1, 2, 3], nested: {key: value}}
 ```
+
+## IPFS Operations
+
+The SDK provides utilities for working with IPFS (InterPlanetary File System) for decentralized content storage.
+
+### Create IPFS Client
+
+```typescript
+import { createIPFSClient, IPFSClient } from "@fhevm-sdk";
+
+// Create client with default configuration (localhost:5001)
+const ipfs = createIPFSClient();
+
+// Or with custom configuration
+const ipfs = createIPFSClient({
+  host: "ipfs.infura.io",
+  port: 5001,
+  protocol: "https",
+  headers: {
+    authorization: `Basic ${btoa(`${projectId}:${projectSecret}`)}`,
+  },
+});
+
+// Or use the class directly
+const ipfs = new IPFSClient({
+  host: "127.0.0.1",
+  port: 5001,
+  protocol: "http",
+});
+```
+
+### Upload Content to IPFS
+
+```typescript
+import { uploadToIPFS } from "@fhevm-sdk";
+
+// Upload JSON data
+const jsonData = {
+  title: "My Newsletter",
+  content: "Newsletter content...",
+  timestamp: Date.now(),
+};
+
+const result = await uploadToIPFS(ipfs, JSON.stringify(jsonData));
+console.log(`Uploaded to IPFS: ${result.cid}`);
+console.log(`Size: ${result.size} bytes`);
+console.log(`Path: ${result.path}`);
+
+// Upload binary data
+const binaryData = new Uint8Array([1, 2, 3, 4, 5]);
+const result = await uploadToIPFS(ipfs, binaryData);
+
+// Upload with custom filename
+const result = await uploadToIPFS(ipfs, content, "newsletter.json");
+```
+
+### Download Content from IPFS
+
+```typescript
+import { downloadFromIPFS } from "@fhevm-sdk";
+
+// Download by CID
+const content = await downloadFromIPFS(
+  ipfs,
+  "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"
+);
+
+console.log("Downloaded content:", content);
+
+// Content is returned as Uint8Array
+// Convert to string if needed
+const text = new TextDecoder().decode(content);
+const json = JSON.parse(text);
+```
+
+### Pin Content
+
+```typescript
+import { pinContent } from "@fhevm-sdk";
+
+// Pin content to ensure it persists
+const result = await pinContent(
+  ipfs,
+  "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"
+);
+
+console.log(`Pinned: ${result.cid}`);
+```
+
+### Unpin Content
+
+```typescript
+import { unpinContent } from "@fhevm-sdk";
+
+// Unpin content when no longer needed
+await unpinContent(
+  ipfs,
+  "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"
+);
+
+console.log("Content unpinned");
+```
+
+### Complete IPFS Workflow
+
+```typescript
+import {
+  createIPFSClient,
+  uploadToIPFS,
+  downloadFromIPFS,
+  pinContent,
+  unpinContent,
+} from "@fhevm-sdk";
+
+async function workflowExample() {
+  // 1. Create client
+  const ipfs = createIPFSClient();
+
+  // 2. Upload content
+  const content = { message: "Hello IPFS!" };
+  const uploadResult = await uploadToIPFS(ipfs, JSON.stringify(content));
+  console.log(`Uploaded: ${uploadResult.cid}`);
+
+  // 3. Pin for persistence
+  await pinContent(ipfs, uploadResult.cid);
+  console.log("Content pinned");
+
+  // 4. Download content
+  const downloaded = await downloadFromIPFS(ipfs, uploadResult.cid);
+  const text = new TextDecoder().decode(downloaded);
+  console.log("Downloaded:", JSON.parse(text));
+
+  // 5. Unpin when done
+  await unpinContent(ipfs, uploadResult.cid);
+  console.log("Content unpinned");
+}
+```
+
+---
+
+## Image Processing
+
+The SDK provides utilities for extracting, encrypting, and processing images in content.
+
+### Extract Images from JSON
+
+```typescript
+import { extractBase64ImagesFromJson } from "@fhevm-sdk";
+
+const editorContent = {
+  type: "doc",
+  content: [
+    {
+      type: "image",
+      attrs: {
+        src: "data:image/png;base64,iVBORw0KGgoAAAANS...",
+      },
+    },
+  ],
+};
+
+// Extract all base64 images
+const images = extractBase64ImagesFromJson(editorContent);
+
+images.forEach((img, index) => {
+  console.log(`Image ${index}:`);
+  console.log(`  Type: ${img.type}`); // "image/png"
+  console.log(`  Data length: ${img.data.length} bytes`);
+  console.log(`  Original: ${img.originalSrc.substring(0, 50)}...`);
+});
+```
+
+### Convert Base64 to Uint8Array
+
+```typescript
+import { base64ToUint8Array } from "@fhevm-sdk";
+
+// Convert base64 string to Uint8Array
+const base64 = "SGVsbG8gV29ybGQh";
+const uint8Array = base64ToUint8Array(base64);
+
+console.log(uint8Array); // Uint8Array(12) [72, 101, 108, 108, 111, ...]
+```
+
+### Encrypt and Decrypt Images
+
+```typescript
+import { encryptImage, decryptImage } from "@fhevm-sdk";
+
+// Encrypt image data
+const imageData = new Uint8Array([...]); // Image bytes
+const key = await generateAESKey(); // From content encryption
+const iv = generateIV();
+
+const encrypted = await encryptImage(imageData, key, iv);
+console.log(`Encrypted image: ${encrypted.length} bytes`);
+
+// Decrypt image data
+const decrypted = await decryptImage(encrypted, key, iv);
+console.log(`Decrypted image: ${decrypted.length} bytes`);
+```
+
+### Upload Images to IPFS
+
+```typescript
+import { uploadImagesToIPFS } from "@fhevm-sdk";
+
+const images = [
+  {
+    type: "image/png",
+    data: new Uint8Array([...]),
+    originalSrc: "data:image/png;base64,...",
+  },
+  {
+    type: "image/jpeg",
+    data: new Uint8Array([...]),
+    originalSrc: "data:image/jpeg;base64,...",
+  },
+];
+
+// Upload all images and get CIDs
+const uploaded = await uploadImagesToIPFS(ipfs, images);
+
+uploaded.forEach((result, index) => {
+  console.log(`Image ${index}:`);
+  console.log(`  CID: ${result.cid}`);
+  console.log(`  Type: ${result.type}`);
+  console.log(`  Original: ${result.originalSrc.substring(0, 50)}...`);
+});
+```
+
+### Replace Images in Content
+
+```typescript
+import { replaceImagesInJson, replaceImagesInHtml } from "@fhevm-sdk";
+
+// Replace images in JSON (TipTap editor format)
+const editorContent = { /* ... */ };
+const uploadedImages = [
+  {
+    cid: "QmABC123...",
+    type: "image/png",
+    originalSrc: "data:image/png;base64,...",
+  },
+];
+
+const updated = replaceImagesInJson(editorContent, uploadedImages);
+console.log("Images replaced with IPFS CIDs");
+
+// Replace images in HTML
+const html = '<img src="data:image/png;base64,..." />';
+const updatedHtml = replaceImagesInHtml(html, uploadedImages);
+console.log(updatedHtml); // '<img src="ipfs://QmABC123..." />'
+```
+
+### Process Newsletter Images
+
+```typescript
+import { processNewsletterImages } from "@fhevm-sdk";
+
+const newsletter = {
+  title: "My Newsletter",
+  content: {
+    type: "doc",
+    content: [
+      {
+        type: "image",
+        attrs: { src: "data:image/png;base64,..." },
+      },
+    ],
+  },
+};
+
+// Extract, upload, and replace images in one call
+const { updatedContent, uploadedImages } = await processNewsletterImages(
+  ipfs,
+  newsletter.content
+);
+
+console.log(`Processed ${uploadedImages.length} images`);
+console.log("Updated content:", updatedContent);
+```
+
+---
+
+## Content Encryption
+
+The SDK provides AES encryption utilities for encrypting newsletter content with FHE key management.
+
+### Generate Encryption Keys
+
+```typescript
+import { generateAESKey, generateIV } from "@fhevm-sdk";
+
+// Generate 256-bit AES key
+const key = await generateAESKey();
+console.log(`Key length: ${key.length} bytes`); // 32 bytes
+
+// Generate initialization vector
+const iv = generateIV();
+console.log(`IV length: ${iv.length} bytes`); // 12 bytes
+```
+
+### Encrypt and Decrypt Content
+
+```typescript
+import {
+  encryptContent,
+  decryptContent,
+  generateAESKey,
+  generateIV,
+} from "@fhevm-sdk";
+
+// Prepare content
+const content = JSON.stringify({
+  title: "Private Newsletter",
+  body: "Confidential content...",
+});
+
+// Generate encryption materials
+const key = await generateAESKey();
+const iv = generateIV();
+
+// Encrypt content
+const encrypted = await encryptContent(content, key, iv);
+console.log(`Encrypted: ${encrypted.length} bytes`);
+
+// Decrypt content
+const decrypted = await decryptContent(encrypted, key, iv);
+const original = JSON.parse(decrypted);
+console.log("Decrypted:", original);
+```
+
+### Convert Keys for FHE
+
+```typescript
+import { aesKeyToFHEInput, fheOutputToAESKey } from "@fhevm-sdk";
+
+// Convert AES key to FHE input format (array of euint8 values)
+const key = await generateAESKey();
+const fheInput = aesKeyToFHEInput(key);
+console.log(`FHE input length: ${fheInput.length}`); // 32 euint8 values
+
+// Convert FHE output back to AES key
+const fheOutput = [/* decrypted euint8 values */];
+const reconstructedKey = fheOutputToAESKey(fheOutput);
+console.log(`Reconstructed key: ${reconstructedKey.length} bytes`);
+```
+
+### Create Preview
+
+```typescript
+import { createPreview } from "@fhevm-sdk";
+
+const fullContent = `
+  <h1>Newsletter Title</h1>
+  <p>First paragraph with some content...</p>
+  <p>Second paragraph with more content...</p>
+  <p>Third paragraph...</p>
+`;
+
+// Create preview (first 200 characters + ellipsis)
+const preview = createPreview(fullContent);
+console.log(preview);
+// "Newsletter Title First paragraph with some content... Second paragraph with more content... Third paragraph..."
+
+// Custom length
+const shortPreview = createPreview(fullContent, 100);
+console.log(shortPreview);
+```
+
+### Serialize and Deserialize Bundles
+
+```typescript
+import {
+  serializeBundle,
+  deserializeBundle,
+  type EncryptedBundle,
+} from "@fhevm-sdk";
+
+// Create encrypted bundle
+const bundle: EncryptedBundle = {
+  version: 1,
+  encrypted: new Uint8Array([1, 2, 3, 4]),
+  iv: new Uint8Array([5, 6, 7, 8]),
+  authTag: new Uint8Array([9, 10, 11, 12]),
+  metadata: {
+    encryptedAt: Date.now(),
+    contentType: "application/json",
+  },
+};
+
+// Serialize to base64 string for storage/transmission
+const serialized = serializeBundle(bundle);
+console.log(`Serialized: ${serialized.length} characters`);
+
+// Deserialize back to bundle
+const deserialized = deserializeBundle(serialized);
+console.log("Deserialized:", deserialized);
+```
+
+### Complete Encryption Workflow
+
+```typescript
+import {
+  generateAESKey,
+  generateIV,
+  encryptContent,
+  serializeBundle,
+  uploadToIPFS,
+  aesKeyToFHEInput,
+  createIPFSClient,
+  type EncryptedBundle,
+} from "@fhevm-sdk";
+
+async function encryptAndUploadNewsletter(newsletter: any) {
+  // 1. Generate encryption materials
+  const key = await generateAESKey();
+  const iv = generateIV();
+
+  // 2. Encrypt content
+  const content = JSON.stringify(newsletter);
+  const encrypted = await encryptContent(content, key, iv);
+
+  // 3. Create encrypted bundle
+  const bundle: EncryptedBundle = {
+    version: 1,
+    encrypted,
+    iv,
+    authTag: encrypted.slice(-16), // Last 16 bytes
+    metadata: {
+      encryptedAt: Date.now(),
+      contentType: "application/json",
+    },
+  };
+
+  // 4. Serialize bundle
+  const serialized = serializeBundle(bundle);
+
+  // 5. Upload to IPFS
+  const ipfs = createIPFSClient();
+  const result = await uploadToIPFS(ipfs, serialized);
+  console.log(`Uploaded to IPFS: ${result.cid}`);
+
+  // 6. Convert key for FHE storage on blockchain
+  const fheInput = aesKeyToFHEInput(key);
+  console.log(`FHE input ready: ${fheInput.length} values`);
+
+  return {
+    ipfsCid: result.cid,
+    fheKeyInput: fheInput,
+    iv,
+  };
+}
+```
+
+---
 
 ## Best Practices
 

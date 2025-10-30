@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useIsMounted } from "usehooks-ts";
 import { usePublicClient } from "wagmi";
+import { handleError, logDebug, logError, validateAddress } from "~/lib/utils";
 import { useSelectedNetwork } from "~~/hooks/helper";
 import {
   Contract,
@@ -9,7 +10,6 @@ import {
   UseDeployedContractConfig,
   contracts,
 } from "~~/utils/helper/contract";
-import { validateAddress, logDebug, logError, handleError } from "~/lib/utils";
 
 type DeployedContractData<TContractName extends ContractName> = {
   data: Contract<TContractName> | undefined;

@@ -16,7 +16,3 @@ export * from "./FhevmDecryptionSignature";
 
 // React hooks
 export * from "./react/index";
-
-// Vanilla JS adapter
-export * from "./vanilla/index";
-

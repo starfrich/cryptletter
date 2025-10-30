@@ -4,12 +4,7 @@
  * Retry strategies optimized for FHEVM operations.
  * Wraps SDK retry utilities with Next.js-specific configurations.
  */
-
-import {
-  retryAsyncOrThrow,
-  calculateBackoffDelay,
-  type RetryOptions,
-} from "@fhevm-sdk/utils";
+import { type RetryOptions, calculateBackoffDelay, retryAsyncOrThrow } from "@fhevm-sdk/utils";
 
 /**
  * Retry options optimized for transaction receipt polling
@@ -55,9 +50,7 @@ const ENCRYPTION_OPERATION_RETRY_OPTIONS: RetryOptions = {
  * });
  * ```
  */
-export async function retryTransactionReceipt<T>(
-  fn: () => Promise<T>
-): Promise<T> {
+export async function retryTransactionReceipt<T>(fn: () => Promise<T>): Promise<T> {
   return retryAsyncOrThrow(fn, TRANSACTION_RECEIPT_RETRY_OPTIONS);
 }
 
@@ -76,10 +69,7 @@ export async function retryTransactionReceipt<T>(
  * });
  * ```
  */
-export async function retryNetworkCall<T>(
-  fn: () => Promise<T>,
-  options?: Partial<RetryOptions>
-): Promise<T> {
+export async function retryNetworkCall<T>(fn: () => Promise<T>, options?: Partial<RetryOptions>): Promise<T> {
   return retryAsyncOrThrow(fn, { ...NETWORK_CALL_RETRY_OPTIONS, ...options });
 }
 
@@ -98,10 +88,7 @@ export async function retryNetworkCall<T>(
  * });
  * ```
  */
-export async function retryEncryptionOperation<T>(
-  fn: () => Promise<T>,
-  options?: Partial<RetryOptions>
-): Promise<T> {
+export async function retryEncryptionOperation<T>(fn: () => Promise<T>, options?: Partial<RetryOptions>): Promise<T> {
   return retryAsyncOrThrow(fn, { ...ENCRYPTION_OPERATION_RETRY_OPTIONS, ...options });
 }
 
@@ -113,10 +100,7 @@ export async function retryEncryptionOperation<T>(
  * @returns Promise with the result of the successful call
  * @throws Error if all retries fail
  */
-export async function retryAsyncOperation<T>(
-  fn: () => Promise<T>,
-  options: Partial<RetryOptions> = {}
-): Promise<T> {
+export async function retryAsyncOperation<T>(fn: () => Promise<T>, options: Partial<RetryOptions> = {}): Promise<T> {
   const defaultOptions: RetryOptions = {
     maxRetries: 3,
     initialDelayMs: 500,
@@ -146,13 +130,7 @@ export function calculateRetryDelay(
   initialDelayMs: number = 500,
   backoffMultiplier: number = 2,
   maxDelayMs: number = 5000,
-  useJitter: boolean = true
+  useJitter: boolean = true,
 ): number {
-  return calculateBackoffDelay(
-    attempt,
-    initialDelayMs,
-    maxDelayMs,
-    backoffMultiplier,
-    useJitter
-  );
+  return calculateBackoffDelay(attempt, initialDelayMs, maxDelayMs, backoffMultiplier, useJitter);
 }

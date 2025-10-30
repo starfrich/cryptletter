@@ -12,3 +12,4 @@ examples/*/dist
 examples/*/.env
 tmp*
 .vscode
+.github/

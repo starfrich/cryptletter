@@ -20,26 +20,20 @@ Utils can be imported from the main package or the utils subpath:
 
 ```typescript
 import {
-  // Error handling
-  getErrorRecoverySuggestion,
-  formatErrorSuggestion,
-  isRetryable,
-  isUserActionError,
-
   // Validation
   assertValidAddress,
-  assertValidFhevmType,
   assertValidEncryptionValue,
-
-  // Retry logic
+  assertValidFhevmType,
+  debug, // Debug logging
+  enableDebugLogging,
+  formatErrorSuggestion, // Error handling
+  getErrorRecoverySuggestion,
+  info,
+  isRetryable,
+  isUserActionError,
+  measureAsync, // Retry logic
   retryAsync,
   retryAsyncOrThrow,
-
-  // Debug logging
-  enableDebugLogging,
-  debug,
-  info,
-  measureAsync,
 } from "@fhevm-sdk";
 
 // Or from utils subpath
@@ -156,12 +150,8 @@ export function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
 
 ```typescript
 // hooks/useErrorHandler.ts
-import { useState, useCallback } from "react";
-import {
-  getErrorRecoverySuggestion,
-  isRetryable,
-  isUserActionError,
-} from "@fhevm-sdk";
+import { useCallback, useState } from "react";
+import { getErrorRecoverySuggestion, isRetryable, isUserActionError } from "@fhevm-sdk";
 
 export function useErrorHandler() {
   const [error, setError] = useState<unknown>(null);
@@ -194,13 +184,8 @@ export function useErrorHandler() {
 
 ```typescript
 // hooks/useValidation.ts
-import { useState, useCallback } from "react";
-import {
-  isValidAddress,
-  isValidFhevmType,
-  validateEncryptionValue,
-  type FhevmEncryptedType,
-} from "@fhevm-sdk";
+import { useCallback, useState } from "react";
+import { type FhevmEncryptedType, isValidAddress, isValidFhevmType, validateEncryptionValue } from "@fhevm-sdk";
 
 interface ValidationState {
   address: string;
@@ -217,41 +202,48 @@ export function useValidation() {
     errors: {},
   });
 
-  const validateAddress = useCallback((address: string) => {
-    const newErrors = { ...state.errors };
+  const validateAddress = useCallback(
+    (address: string) => {
+      const newErrors = { ...state.errors };
 
-    if (!address) {
-      newErrors.address = "Address is required";
-    } else if (!isValidAddress(address)) {
-      newErrors.address = "Invalid Ethereum address";
-    } else {
-      delete newErrors.address;
-    }
+      if (!address) {
+        newErrors.address = "Address is required";
+      } else if (!isValidAddress(address)) {
+        newErrors.address = "Invalid Ethereum address";
+      } else {
+        delete newErrors.address;
+      }
 
-    setState((s) => ({ ...s, errors: newErrors }));
-    return !newErrors.address;
-  }, [state.errors]);
+      setState(s => ({ ...s, errors: newErrors }));
+      return !newErrors.address;
+    },
+    [state.errors],
+  );
 
-  const validateValue = useCallback((value: string) => {
-    const newErrors = { ...state.errors };
+  const validateValue = useCallback(
+    (value: string) => {
+      const newErrors = { ...state.errors };
 
-    if (!value) {
-      newErrors.value = "Value is required";
-    } else if (!validateEncryptionValue(Number(value), state.type)) {
-      const range = {
-        euint8: "0-255",
-        euint16: "0-65535",
-        euint32: "0-4294967295",
-        euint64: "0-18446744073709551615",
-      }[state.type] || "0-max";
-      newErrors.value = `Value must be between ${range}`;
-    } else {
-      delete newErrors.value;
-    }
+      if (!value) {
+        newErrors.value = "Value is required";
+      } else if (!validateEncryptionValue(Number(value), state.type)) {
+        const range =
+          {
+            euint8: "0-255",
+            euint16: "0-65535",
+            euint32: "0-4294967295",
+            euint64: "0-18446744073709551615",
+          }[state.type] || "0-max";
+        newErrors.value = `Value must be between ${range}`;
+      } else {
+        delete newErrors.value;
+      }
 
-    setState((s) => ({ ...s, errors: newErrors }));
-    return !newErrors.value;
-  }, [state.type, state.errors]);
+      setState(s => ({ ...s, errors: newErrors }));
+      return !newErrors.value;
+    },
+    [state.type, state.errors],
+  );
 
   return {
     state,
@@ -392,8 +384,8 @@ export function EncryptForm({ onSubmit }: EncryptFormProps) {
 
 ```typescript
 // hooks/useFHEEncryptWithRetry.ts
-import { useState, useCallback } from "react";
-import { retryAsyncOrThrow, isRetryable } from "@fhevm-sdk";
+import { useCallback, useState } from "react";
+import { isRetryable, retryAsyncOrThrow } from "@fhevm-sdk";
 import { useFhevmInstance } from "@fhevm-sdk/react";
 
 interface EncryptResult {
@@ -407,11 +399,7 @@ export function useFHEEncryptWithRetry() {
   const [error, setError] = useState<unknown>(null);
 
   const encrypt = useCallback(
-    async (
-      address: string,
-      value: number,
-      type: string
-    ): Promise<EncryptResult> => {
+    async (address: string, value: number, type: string): Promise<EncryptResult> => {
       setIsLoading(true);
       setError(null);
 
@@ -426,11 +414,9 @@ export function useFHEEncryptWithRetry() {
             maxRetries: 3,
             initialDelayMs: 100,
             onRetry: (attempt, err, delay) => {
-              console.log(
-                `Encryption retry ${attempt}/3, retrying in ${delay}ms`
-              );
+              console.log(`Encryption retry ${attempt}/3, retrying in ${delay}ms`);
             },
-          }
+          },
         );
 
         const durationMs = performance.now() - startTime;
@@ -446,7 +432,7 @@ export function useFHEEncryptWithRetry() {
         setIsLoading(false);
       }
     },
-    [instance]
+    [instance],
   );
 
   return {
@@ -462,7 +448,7 @@ export function useFHEEncryptWithRetry() {
 
 ```typescript
 // hooks/useFHEDecryptWithFallback.ts
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { retryAsync } from "@fhevm-sdk";
 import { useFhevmInstance } from "@fhevm-sdk/react";
 
@@ -483,7 +469,7 @@ export function useFHEDecryptWithFallback() {
           {
             maxRetries: 2,
             initialDelayMs: 500,
-          }
+          },
         );
 
         if (result.success) {
@@ -492,9 +478,7 @@ export function useFHEDecryptWithFallback() {
 
         // If failed, try getting fresh signature
         console.log("Getting fresh decryption signature...");
-        const freshSignature = await instance.getDecryptionSignature(
-          contractAddress
-        );
+        const freshSignature = await instance.getDecryptionSignature(contractAddress);
 
         // Try again with fresh signature
         const secondResult = await retryAsync(
@@ -504,7 +488,7 @@ export function useFHEDecryptWithFallback() {
           {
             maxRetries: 2,
             initialDelayMs: 500,
-          }
+          },
         );
 
         if (secondResult.success) {
@@ -516,7 +500,7 @@ export function useFHEDecryptWithFallback() {
         setIsLoading(false);
       }
     },
-    [instance]
+    [instance],
   );
 
   return {
@@ -802,10 +786,7 @@ async function processValue(address: string, value: number, type: string) {
 ```typescript
 // ✅ Good: Retry automatically
 try {
-  const result = await retryAsyncOrThrow(
-    () => createFhevmInstance(params),
-    { maxRetries: 3 }
-  );
+  const result = await retryAsyncOrThrow(() => createFhevmInstance(params), { maxRetries: 3 });
 } catch (error) {
   // Only permanent errors reach here
 }
@@ -872,10 +853,7 @@ async function robustEncrypt(address: string, value: number, type: string) {
 
   // 2. Retry with exponential backoff
   try {
-    return await retryAsyncOrThrow(
-      () => instance.encrypt(value, type),
-      { maxRetries: 3, initialDelayMs: 100 }
-    );
+    return await retryAsyncOrThrow(() => instance.encrypt(value, type), { maxRetries: 3, initialDelayMs: 100 });
   } catch (error) {
     // 3. Get recovery suggestion
     const suggestion = getErrorRecoverySuggestion(error);

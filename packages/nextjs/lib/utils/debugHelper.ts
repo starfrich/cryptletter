@@ -4,18 +4,17 @@
  * Debug and logging utilities with localStorage persistence.
  * Wraps SDK debug utilities with Next.js-specific logic.
  */
-
 import {
-  enableDebugLogging,
-  disableDebugLogging,
-  getDebugState,
-  debug,
-  info,
-  warn,
-  error,
-  startTimer,
-  measureAsync,
   type PerformanceMetric,
+  debug,
+  disableDebugLogging,
+  enableDebugLogging,
+  error,
+  getDebugState,
+  info,
+  measureAsync,
+  startTimer,
+  warn,
 } from "@fhevm-sdk/utils";
 
 const DEBUG_MODE_KEY = "FHEVM_DEBUG";
@@ -153,10 +152,7 @@ export function startPerformanceTimer(label: string): () => PerformanceMetric {
  * });
  * ```
  */
-export async function measureOperationPerformance<T>(
-  label: string,
-  fn: () => Promise<T>
-): Promise<T> {
+export async function measureOperationPerformance<T>(label: string, fn: () => Promise<T>): Promise<T> {
   return measureAsync(label, fn);
 }
 

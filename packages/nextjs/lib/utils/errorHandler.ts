@@ -4,13 +4,12 @@
  * Centralizes error handling with user-friendly recovery suggestions.
  * Wraps SDK error utilities with Next.js-specific logic.
  */
-
 import {
-  getErrorRecoverySuggestion,
+  type ErrorRecoverySuggestion,
   formatErrorSuggestion,
+  getErrorRecoverySuggestion,
   isRetryable,
   isUserActionError,
-  type ErrorRecoverySuggestion,
 } from "@fhevm-sdk/utils";
 
 /**
@@ -76,12 +75,12 @@ export function initializeErrorHandling(): void {
   // Set up global unhandled error listeners if needed
   if (typeof window !== "undefined") {
     // Global error handler
-    window.addEventListener("error", (event) => {
+    window.addEventListener("error", event => {
       console.error("Unhandled error:", event.error);
     });
 
     // Unhandled promise rejection
-    window.addEventListener("unhandledrejection", (event) => {
+    window.addEventListener("unhandledrejection", event => {
       console.error("Unhandled promise rejection:", event.reason);
     });
   }
