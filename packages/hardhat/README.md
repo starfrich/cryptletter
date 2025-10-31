@@ -124,7 +124,7 @@ packages/hardhat/
 ├── deploy/
 │   └── 01_deploy_cryptletter.ts # Automated deployment script
 ├── test/
-│   └── Cryptletter.ts           # Comprehensive test suite (822 lines)
+│   └── Cryptletter.ts           # Comprehensive test suite (776 lines)
 ├── tasks/
 │   └── accounts.ts              # Hardhat task utilities
 ├── types/                        # Generated TypeChain types
@@ -266,7 +266,7 @@ The test suite (`test/Cryptletter.ts`) includes:
 - ✅ Edge cases & error handling
 - ✅ FHE encryption flow verification
 
-**Coverage**: 100% of contract functions tested with 822 test assertions.
+**Coverage**: Comprehensive test coverage of all contract functions.
 
 Run tests with:
 
