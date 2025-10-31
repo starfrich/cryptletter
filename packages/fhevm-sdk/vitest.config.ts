@@ -10,6 +10,7 @@ export default defineConfig({
     hookTimeout: 30000,
     environmentMatchGlobs: [
       ["test/react/**", "jsdom"],
+      ["test/vue/**", "jsdom"],
       ["test/utils/encryption.test.ts", "jsdom"],
       ["test/utils/ipfs.test.ts", "jsdom"],
     ],

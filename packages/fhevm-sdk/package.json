@@ -30,6 +30,14 @@
     "./react": {
       "types": "./src/react/index.ts",
       "default": "./dist/react/index.js"
+    },
+    "./vue": {
+      "types": "./src/vue/index.ts",
+      "default": "./dist/vue/index.js"
+    },
+    "./vanilla": {
+      "types": "./src/vanilla/index.ts",
+      "default": "./dist/vanilla/index.js"
     }
   },
   "scripts": {
@@ -47,19 +55,25 @@
     "@fhevm/mock-utils": "^0.1.0",
     "@zama-fhe/relayer-sdk": "^0.2.0",
     "ethers": "^6.13.4",
-    "react": "^18.0.0 || ^19.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "vue": "^3.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   },
   "devDependencies": {
     "@testing-library/react": "^15.0.7",
+    "@testing-library/vue": "^8.1.0",
     "@types/node": "~18.19.50",
     "@types/react": "~19.0.7",
     "@vitest/coverage-v8": "2.1.9",
     "@vitest/ui": "^2.1.8",
+    "@vue/test-utils": "^2.4.6",
     "@zama-fhe/relayer-sdk": "0.2.0",
     "ethers": "^6.13.7",
     "fake-indexeddb": "~6.0.0",
@@ -67,6 +81,7 @@
     "react": "~19.0.0",
     "react-dom": "~19.0.0",
     "typescript": "~5.8.2",
-    "vitest": "~2.1.8"
+    "vitest": "~2.1.8",
+    "vue": "^3.4.0"
   }
 }
