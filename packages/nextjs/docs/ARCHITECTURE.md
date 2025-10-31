@@ -1,52 +1,26 @@
 # Cryptletter Frontend Architecture
 
-Complete architectural documentation for the Cryptletter Next.js application.
+Architectural overview for the Cryptletter Next.js application.
 
 ## Table of Contents
 
-1. [Overview](#overview)
+1. [Tech Stack](#tech-stack)
 2. [Application Structure](#application-structure)
-3. [Routing & Pages](#routing--pages)
-4. [Component Architecture](#component-architecture)
+3. [Routing](#routing)
+4. [Key Components](#key-components)
 5. [State Management](#state-management)
 6. [Data Flow](#data-flow)
-7. [FHEVM Integration](#fhevm-integration)
-8. [IPFS Integration](#ipfs-integration)
-9. [Security Considerations](#security-considerations)
+7. [FHEVM & IPFS Integration](#fhevm--ipfs-integration)
+8. [Security](#security)
 
-## Overview
+## Tech Stack
 
-Cryptletter follows a modern **Next.js App Router** architecture with:
-
-- **Server Components** for static content (creator lists, public previews)
-- **Client Components** for interactive features (wallet, encryption, forms)
-- **Hybrid Rendering** to optimize performance and UX
-- **Type-Safe Contracts** via generated ABIs and TypeChain
-
-### Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     User Browser                            │
-│  ┌────────────────┐  ┌─────────────┐  ┌─────────────────┐   │
-│  │  Next.js App   │  │   Wallet    │  │   FHEVM SDK     │   │
-│  │  (React 19)    │◄─┤  (MetaMask) │  │   (@fhevm-sdk)  │   │
-│  └────────┬───────┘  └─────────────┘  └────────┬────────┘   │
-│           │                                     │           │
-└───────────┼─────────────────────────────────────┼───────────┘
-            │                                     │
-            │ JSON-RPC                            │ FHE Ops
-            ▼                                     ▼
-┌──────────────────────┐              ┌─────────────────────┐
-│  Ethereum Network    │◄─────────────┤  Zama FHE Gateway   │
-│  (Localhost/Sepolia) │              │  (Relayer SDK)      │
-│                      │              └─────────────────────┘
-│  ┌────────────────┐  │
-│  │  Cryptletter   │  │              ┌─────────────────────┐
-│  │  Smart Contract│◄─┼──────────────┤     IPFS Network    │
-│  └────────────────┘  │              │  (Content Storage)  │
-└──────────────────────┘              └─────────────────────┘
-```
+- **Framework**: Next.js 14+ (App Router)
+- **Web3**: Wagmi v2 + Viem
+- **FHE**: @fhevm-sdk (Zama)
+- **Storage**: IPFS (Pinata)
+- **Styling**: TailwindCSS + DaisyUI
+- **State**: Zustand + React Query
 
 ## Application Structure
 
@@ -60,6 +34,13 @@ packages/nextjs/
 │   ├── not-found.tsx           # 404 page
 │   │
 │   ├── _components/            # Page-level shared components
+│   │   ├── CreatorDashboardView.tsx
+│   │   ├── CreatorDiscovery.tsx
+│   │   ├── CreatorProfile.tsx
+│   │   ├── NewsletterDetail.tsx
+│   │   ├── PublishEditor.tsx
+│   │   ├── SubscribeCheckout.tsx
+│   │   └── SubscriptionManagement.tsx
 │   │
 │   ├── creator/                # Creator routes
 │   │   └── [address]/
@@ -92,10 +73,12 @@ packages/nextjs/
 │   ├── scaffold-eth/           # Contract interaction hooks
 │   └── fhevm/                  # FHEVM-specific hooks
 │
-├── services/                   # Business logic
-│   ├── ipfs.ts                 # IPFS operations
-│   ├── encryption.ts           # FHE encryption logic
-│   └── contracts.ts            # Contract utilities
+├── services/                   # Application services
+│   ├── store/                  # Zustand state stores
+│   │   └── store.ts            # Global app state
+│   └── web3/                   # Web3 configuration
+│       ├── wagmiConfig.tsx     # Wagmi config
+│       └── wagmiConnectors.tsx # Wallet connectors
 │
 ├── utils/                      # Helper functions
 │   ├── validation.ts
@@ -114,83 +97,21 @@ packages/nextjs/
     └── globals.css
 ```
 
-## Routing & Pages
+## Routing
 
-### Route Structure
+| Route                          | Auth | Description              |
+| ------------------------------ | ---- | ------------------------ |
+| `/`                            | No   | Creator discovery        |
+| `/creator/[address]`           | No   | Creator profile          |
+| `/creator/[address]/post/[id]` | Yes* | Newsletter viewer        |
+| `/subscribe/[address]`         | Yes  | Subscribe checkout       |
+| `/dashboard`                   | Yes  | Creator dashboard        |
+| `/dashboard/publish`           | Yes  | Publish newsletter       |
+| `/subscriptions`               | Yes  | User subscriptions       |
 
-| Route                          | Type          | Auth Required | Description                  |
-| ------------------------------ | ------------- | ------------- | ---------------------------- |
-| `/`                            | Server        | No            | Homepage - creator discovery |
-| `/creator/[address]`           | Server/Client | No            | Creator profile              |
-| `/creator/[address]/post/[id]` | Client        | Conditional   | Newsletter post viewer       |
-| `/subscribe/[address]`         | Client        | Yes           | Subscribe to creator         |
-| `/dashboard`                   | Client        | Yes           | Creator dashboard overview   |
-| `/dashboard/publish`           | Client        | Yes           | Publish new newsletter       |
-| `/subscriptions`               | Client        | Yes           | User's active subscriptions  |
+*Auth required only for premium content
 
-### Page Component Patterns
-
-#### Server Component (Static Content)
-
-```typescript
-// app/page.tsx
-import { CreatorCard } from '@/components/cryptletter/CreatorCard';
-
-export default async function HomePage() {
-  // Can fetch data server-side
-  return (
-    <div className="container mx-auto">
-      <h1>Discover Creators</h1>
-      {/* Server-rendered creator list */}
-    </div>
-  );
-}
-```
-
-#### Client Component (Interactive)
-
-```typescript
-// app/dashboard/publish/page.tsx
-'use client';
-
-import { useState } from 'react';
-import { useAccount } from 'wagmi';
-import { NewsletterEditor } from '@/components/cryptletter/NewsletterEditor';
-
-export default function PublishPage() {
-  const { address, isConnected } = useAccount();
-
-  if (!isConnected) {
-    return <ConnectWalletPrompt />;
-  }
-
-  return <NewsletterEditor creatorAddress={address} />;
-}
-```
-
-#### Dynamic Route with Auth
-
-```typescript
-// app/creator/[address]/post/[id]/page.tsx
-'use client';
-
-import { useParams } from 'next/navigation';
-import { NewsletterViewer } from '@/components/cryptletter/NewsletterViewer';
-
-export default function NewsletterPostPage() {
-  const params = useParams();
-  const { address, id } = params;
-
-  return (
-    <NewsletterViewer
-      creatorAddress={address as string}
-      postId={Number(id)}
-    />
-  );
-}
-```
-
-## Component Architecture
+## Key Components
 
 ### Component Hierarchy
 
@@ -214,117 +135,45 @@ App
     └── Page Content
         ├── PageContainer (layout wrapper)
         └── Page-specific components
-            ├── CreatorCard
-            ├── NewsletterEditor
-            │   └── TiptapEditor
-            ├── NewsletterPreview
-            ├── NewsletterViewer
-            └── SubscriptionStatus
+            ├── app/_components/
+            │   ├── CreatorDashboardView
+            │   ├── CreatorDiscovery
+            │   ├── CreatorProfile
+            │   ├── NewsletterDetail
+            │   ├── PublishEditor
+            │   ├── SubscribeCheckout
+            │   └── SubscriptionManagement
+            │
+            └── components/cryptletter/
+                ├── CreatorCard
+                ├── NewsletterEditor
+                │   └── TiptapEditor
+                ├── NewsletterPreview
+                ├── NewsletterViewer
+                └── SubscriptionStatus
 ```
 
-### Component Categories
+### Key Domain Components
 
-#### 1. Layout Components
-
-**Purpose**: Structure and page layout
-
+**NewsletterEditor** - Rich text editor with encryption
 ```typescript
-// components/layouts/PageContainer.tsx
-export function PageContainer({ children, className }: Props) {
-  return (
-    <div className={cn('container mx-auto px-4 py-8', className)}>
-      {children}
-    </div>
-  );
-}
-```
-
-#### 2. Domain Components (Cryptletter-specific)
-
-**Purpose**: Business logic and features
-
-```typescript
-// components/cryptletter/NewsletterEditor.tsx
-'use client';
-
 import { useFHEEncryption } from '@fhevm-sdk/react';
-import { useScaffoldWriteContract } from '@/hooks/scaffold-eth';
-import { TiptapEditor } from './TiptapEditor';
+import { useWriteContract } from 'wagmi';
 
-export function NewsletterEditor({ creatorAddress }: Props) {
-  const { encryptData } = useFHEEncryption();
-  const { writeAsync: publishNewsletter } = useScaffoldWriteContract({
-    contractName: 'Cryptletter',
-    functionName: 'publishNewsletter',
-  });
-
-  const handlePublish = async (content: string) => {
-    // 1. Encrypt content with AES
-    const { encrypted, key } = await encryptAES(content);
-
-    // 2. Upload to IPFS
-    const cid = await uploadToIPFS(encrypted);
-
-    // 3. Encrypt AES key with FHE
-    const fheKey = await encryptData(key, 'euint256');
-
-    // 4. Publish to blockchain
-    await publishNewsletter({
-      args: [cid, fheKey.handle, fheKey.proof, title, preview, isPublic],
-    });
-  };
-
-  return <TiptapEditor onPublish={handlePublish} />;
-}
+// Handles: AES encryption → IPFS upload → FHE key encryption → Blockchain publish
 ```
 
-#### 3. Helper Components
-
-**Purpose**: Reusable UI utilities
-
+**NewsletterViewer** - Decrypt and display newsletters
 ```typescript
-// components/helper/Address.tsx
-export function Address({ address, format = 'short' }: Props) {
-  const formatted = format === 'short'
-    ? `${address.slice(0, 6)}...${address.slice(-4)}`
-    : address;
+import { useFHEDecrypt } from '@fhevm-sdk/react';
+import { decryptContent } from '@fhevm-sdk';
 
-  return (
-    <span className="font-mono text-sm">
-      {formatted}
-      <CopyButton text={address} />
-    </span>
-  );
-}
+// Handles: Permission check → FHE decrypt → IPFS fetch → AES decrypt → Display
 ```
 
-### Component Communication
-
-#### Props Down, Events Up
-
-```typescript
-// Parent passes data and callbacks
-<NewsletterEditor
-  creatorAddress={address}
-  onPublishSuccess={(postId) => {
-    toast.success('Published!');
-    router.push(`/creator/${address}/post/${postId}`);
-  }}
-  onPublishError={(error) => {
-    toast.error(error.message);
-  }}
-/>
-
-// Child emits events
-const handleSubmit = async () => {
-  try {
-    const postId = await publish();
-    onPublishSuccess(postId);
-  } catch (error) {
-    onPublishError(error);
-  }
-};
-```
+**CreatorProfile** - Creator info and newsletter list
+**SubscribeCheckout** - Subscription payment flow
+**SubscriptionManagement** - Manage active subscriptions
 
 ## State Management
 
@@ -364,15 +213,19 @@ const handleSubmit = async () => {
 
 ```typescript
 // hooks/useCreatorProfile.ts
-import { useScaffoldReadContract } from "./scaffold-eth";
+import { useReadContract } from "wagmi";
+import { useDeployedContractInfo } from "./helper";
 
 export function useCreatorProfile(address: string) {
-  return useScaffoldReadContract({
-    contractName: "Cryptletter",
+  const { data: contractInfo } = useDeployedContractInfo("Cryptletter");
+
+  return useReadContract({
+    address: contractInfo?.address,
+    abi: contractInfo?.abi,
     functionName: "getCreator",
     args: [address],
     query: {
-      enabled: !!address,
+      enabled: !!address && !!contractInfo,
       staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 3,
     },
@@ -416,284 +269,97 @@ export const useDraftStore = create<DraftStore>()(
 
 ## Data Flow
 
-### Newsletter Publishing Flow
+### Newsletter Publishing
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│  1. User writes content in TiptapEditor                      │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  2. Generate AES-256 key                                     │
-│     - Random 256-bit key                                     │
-│     - Encrypt content with AES-GCM                           │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  3. Upload to IPFS                                           │
-│     - uploadToIPFS(encryptedContent)                         │
-│     - Returns CID (e.g., QmXxxx...)                          │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  4. Encrypt AES key with FHE                                 │
-│     - useFHEEncryption().encryptData(aesKey, 'euint256')     │
-│     - Returns { handle, proof }                              │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  5. Publish to blockchain                                    │
-│     - Cryptletter.publishNewsletter(                         │
-│         contentCID,                                          │
-│         fheEncryptedKey,                                     │
-│         proof,                                               │
-│         title,                                               │
-│         preview,                                             │
-│         isPublic                                             │
-│       )                                                      │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  6. Transaction confirmed                                    │
-│     - Event: NewsletterPublished(postId, ...)                │
-│     - Redirect to /creator/[address]/post/[postId]           │
-└──────────────────────────────────────────────────────────────┘
-```
+1. **Encrypt Content** - Generate AES-256 key, encrypt content with AES-GCM
+2. **Upload to IPFS** - Upload encrypted content, get CID
+3. **Encrypt AES Key** - Encrypt AES key with FHE (`useFHEEncryption`)
+4. **Publish to Blockchain** - Call `publishNewsletter(cid, encryptedKey, proof, ...)`
+5. **Confirm** - Wait for tx confirmation, redirect to post page
 
-### Newsletter Reading Flow
+### Newsletter Reading
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│  1. User navigates to /creator/[address]/post/[id]           │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  2. Check access permission                                  │
-│     - Cryptletter.canAccessNewsletter(postId, userAddress)   │
-│     - If false → Show "Subscribe to read"                    │
-└────────────────────────┬─────────────────────────────────────┘
-                         │ (has access)
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  3. Grant decryption permission                              │
-│     - Cryptletter.grantDecryptionPermission(postId)          │
-│     - Contract calls FHE.allow(encryptedKey, userAddress)    │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  4. Get encrypted key handle                                 │
-│     - Cryptletter.getDecryptionKey(postId)                   │
-│     - Returns euint256 handle                                │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  5. Decrypt FHE key                                          │
-│     - useFHEDecrypt().decryptData(handle, contractAddress)   │
-│     - Relayer decrypts via Zama gateway                      │
-│     - Returns plaintext AES-256 key                          │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  6. Fetch from IPFS                                          │
-│     - Newsletter.contentCID → fetchFromIPFS(cid)             │
-│     - Returns encrypted content                              │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  7. Decrypt content with AES                                 │
-│     - decryptAES(encryptedContent, aesKey)                   │
-│     - Returns plaintext HTML/Markdown                        │
-└────────────────────────┬─────────────────────────────────────┘
-                         │
-                         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  8. Render content                                           │
-│     - react-markdown / DOMPurify sanitization                │
-│     - Display in NewsletterViewer                            │
-└──────────────────────────────────────────────────────────────┘
-```
+1. **Check Access** - Verify user subscription via `canAccessNewsletter()`
+2. **Grant Permission** - Call `grantDecryptionPermission()` (FHE ACL)
+3. **Decrypt FHE Key** - Use `useFHEDecrypt()` to get plaintext AES key
+4. **Fetch from IPFS** - Download encrypted content using CID
+5. **Decrypt Content** - Decrypt with AES key using `decryptContent()`
+6. **Render** - Sanitize HTML and display in viewer
 
-## FHEVM Integration
+## FHEVM & IPFS Integration
 
-### SDK Initialization
+### FHEVM Setup
 
 ```typescript
-// components/DappWrapperWithProviders.tsx
+// app/layout.tsx or DappWrapperWithProviders.tsx
 import { FhevmProvider } from '@fhevm-sdk/react';
 
-export function DappWrapperWithProviders({ children }: Props) {
-  return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <FhevmProvider
-          config={{
-            gatewayUrl: process.env.NEXT_PUBLIC_GATEWAY_URL,
-            relayerUrl: process.env.NEXT_PUBLIC_RELAYER_URL,
-          }}
-        >
-          {children}
-        </FhevmProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
-  );
-}
+<FhevmProvider>
+  <App />
+</FhevmProvider>
 ```
 
-### Using FHEVM Hooks
+### FHEVM Hooks
 
 ```typescript
-// components/EncryptButton.tsx
-import { useFHEEncryption } from '@fhevm-sdk/react';
+import { useFHEEncryption, useFHEDecrypt } from '@fhevm-sdk/react';
 
-export function EncryptButton({ value, onEncrypted }: Props) {
-  const { encryptData, isEncrypting, error } = useFHEEncryption();
+// Encrypt data
+const { encryptData } = useFHEEncryption();
+const encrypted = await encryptData(value, 'euint256');
 
-  const handleClick = async () => {
-    try {
-      const result = await encryptData(value, 'euint256');
-      onEncrypted(result);
-    } catch (err) {
-      toast.error('Encryption failed');
-    }
-  };
-
-  return (
-    <button onClick={handleClick} disabled={isEncrypting}>
-      {isEncrypting ? 'Encrypting...' : 'Encrypt'}
-    </button>
-  );
-}
+// Decrypt data
+const { decrypt } = useFHEDecrypt();
+const plaintext = await decrypt(handle, contractAddress);
 ```
 
 ## IPFS Integration
 
-### Upload Service
+IPFS utilities are provided by the `@fhevm-sdk` package:
 
 ```typescript
-// services/ipfs.ts
-import { create } from "kubo-rpc-client";
+// Import from @fhevm-sdk
+import { createIPFSClient } from "@fhevm-sdk";
 
-const client = create({
-  url: process.env.NEXT_PUBLIC_KUBO_RPC_URL || "http://127.0.0.1:5001",
+// Create IPFS client with Pinata credentials
+const ipfsClient = createIPFSClient({
+  pinataJWT: process.env.NEXT_PUBLIC_PINATA_JWT,
+  pinataGateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY,
 });
 
-export async function uploadToIPFS(content: string | object): Promise<string> {
-  const data = typeof content === "string" ? content : JSON.stringify(content);
+// Upload to IPFS
+const cid = await ipfsClient.upload(content);
 
-  const { cid } = await client.add(data, {
-    pin: true,
-    cidVersion: 1,
-  });
-
-  return cid.toString();
-}
-
-export async function fetchFromIPFS(cid: string): Promise<any> {
-  const chunks = [];
-  for await (const chunk of client.cat(cid)) {
-    chunks.push(chunk);
-  }
-
-  const data = Buffer.concat(chunks).toString("utf-8");
-
-  try {
-    return JSON.parse(data);
-  } catch {
-    return data;
-  }
-}
+// Fetch from IPFS
+const data = await ipfsClient.fetch(cid);
 ```
 
-## Security Considerations
-
-### 1. XSS Prevention
+### Encryption/Decryption Utilities
 
 ```typescript
-// Always sanitize user-generated content
-import DOMPurify from 'isomorphic-dompurify';
+// Import from @fhevm-sdk
+import { encryptContent, decryptContent, serializeBundle, deserializeBundle } from "@fhevm-sdk";
 
-function NewsletterContent({ html }: Props) {
-  const clean = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['p', 'strong', 'em', 'u', 'a', 'img', 'h1', 'h2', 'h3'],
-    ALLOWED_ATTR: ['href', 'src', 'alt', 'title'],
-  });
+// Encrypt content with AES
+const { encryptedData, encryptedKey } = await encryptContent(content, aesKey);
 
-  return <div dangerouslySetInnerHTML={{ __html: clean }} />;
-}
+// Decrypt content
+const plaintext = await decryptContent(encryptedData, aesKey);
 ```
 
-### 2. Input Validation
+## Security
 
-```typescript
-// Use Zod for runtime validation
-import { z } from "zod";
+### Best Practices
 
-const publishSchema = z.object({
-  title: z.string().min(1).max(200),
-  content: z.string().min(100).max(100000),
-  price: z.number().min(0),
-  preview: z.string().max(500),
-});
-
-// Validate before submission
-const validated = publishSchema.parse(formData);
-```
-
-### 3. Access Control
-
-```typescript
-// Always verify on-chain access
-const hasAccess = await readContract({
-  address: contractAddress,
-  abi: CryptletterABI,
-  functionName: "canAccessNewsletter",
-  args: [postId, userAddress],
-});
-
-if (!hasAccess) {
-  throw new Error("Access denied");
-}
-```
-
-### 4. Rate Limiting
-
-```typescript
-// Implement client-side debouncing
-import { useDebouncedCallback } from "usehooks-ts";
-
-const debouncedSearch = useDebouncedCallback((query: string) => performSearch(query), 500);
-```
-
-### 5. Error Boundaries
-
-```typescript
-// app/error.tsx
-'use client';
-
-export default function Error({ error, reset }: Props) {
-  return (
-    <div className="error-container">
-      <h2>Something went wrong!</h2>
-      <button onClick={reset}>Try again</button>
-    </div>
-  );
-}
-```
+1. **XSS Prevention** - Always sanitize HTML with DOMPurify
+2. **Input Validation** - Use Zod schemas for form validation
+3. **Access Control** - Verify permissions on-chain via `canAccessNewsletter()`
+4. **Rate Limiting** - Implement debouncing for user inputs
+5. **Error Boundaries** - Catch errors with Next.js error.tsx
 
 ---
 
-**For more details:**
-
-- [UTILS_INTEGRATION.md](./UTILS_INTEGRATION.md) - SDK utils guide
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment instructions
-- [Main README](../README.md) - Getting started guide
+**See also:**
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment guide
+- [UTILS_INTEGRATION.md](./UTILS_INTEGRATION.md) - SDK utilities
+- [README.md](../README.md) - Getting started

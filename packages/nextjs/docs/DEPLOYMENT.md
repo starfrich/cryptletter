@@ -1,137 +1,58 @@
 # Deployment Guide
 
-Quick deployment guide for Cryptletter Next.js application.
-
-## Table of Contents
-
-1. [Environment Variables](#environment-variables)
-2. [Vercel Deployment](#vercel-deployment)
-3. [Self-Hosted Deployment](#self-hosted-deployment)
-4. [Post-Deployment Checklist](#post-deployment-checklist)
+Deploy Cryptletter Next.js application to Vercel or self-hosted.
 
 ## Environment Variables
 
 Create `.env.local` or set in your deployment platform:
 
 ```env
-# Required
-NEXT_PUBLIC_CHAIN_ID=11155111
+# Required - Alchemy RPC
+NEXT_PUBLIC_ALCHEMY_API_KEY=your_alchemy_api_key
 
-# Optional
-NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_project_id
-NEXT_PUBLIC_IPFS_GATEWAY=https://ipfs.io/ipfs/
-NEXT_PUBLIC_KUBO_RPC_URL=http://127.0.0.1:5001
-NEXT_PUBLIC_ENABLE_DEBUG=false
+# Required - WalletConnect
+NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id
+
+# Required - Pinata IPFS
+NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt_token
+NEXT_PUBLIC_PINATA_GATEWAY=https://your-gateway.mypinata.cloud
+
+# Optional - Server-side Pinata API (if needed)
+PINATA_API_KEY=your_pinata_api_key
+PINATA_API_SECRET=your_pinata_api_secret
 ```
 
 ## Vercel Deployment
 
-### Quick Deploy
+### Quick Deploy (CLI)
 
 ```bash
-# Install Vercel CLI
 pnpm add -g vercel
-
-# Login
-pnpm vercel:login
-
-# Deploy preview
-pnpm vercel
-
-# Deploy to production
-pnpm vercel --prod
+vercel login
+vercel --prod
 ```
 
-### Via Vercel Dashboard
+### Via Dashboard
 
-1. **Import Project**
-   - Connect GitHub repository
-   - Select `packages/nextjs` as root directory
+1. Import GitHub repo
+2. Set root: `packages/nextjs`
+3. Build command: `cd ../.. && pnpm install && pnpm build --filter nextjs`
+4. Add environment variables (see above)
+5. Deploy
 
-2. **Configure Build**
-   - Framework: Next.js
-   - Build Command: `cd ../.. && pnpm install && pnpm build --filter nextjs`
-   - Output Directory: `.next`
+## Self-Hosted
 
-3. **Set Environment Variables**
-   - Add all variables from `.env.local`
-   - Make sure to prefix with `NEXT_PUBLIC_`
-
-4. **Deploy**
-   - Click "Deploy"
-   - Wait for build to complete
-
-### Custom Domain
+### Build & Run
 
 ```bash
-# Add domain via CLI
-vercel domains add yourdomain.com
-
-# Or via Vercel dashboard:
-# Settings → Domains → Add Domain
-```
-
-## Self-Hosted Deployment
-
-### Build for Production
-
-```bash
-# From root directory
+# Build
 pnpm build
 
-# Or from nextjs package
-cd packages/nextjs
-pnpm build
+# Start
+pnpm serve  # or: cd packages/nextjs && pnpm start
 ```
 
-### Start Production Server
-
-```bash
-# From root
-pnpm serve
-
-# Or from nextjs package
-pnpm start
-```
-
-### Docker Deployment
-
-```dockerfile
-# Dockerfile
-FROM node:20-alpine AS base
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Build stage
-FROM base AS builder
-WORKDIR /app
-
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY packages/nextjs/package.json ./packages/nextjs/
-COPY packages/fhevm-sdk/package.json ./packages/fhevm-sdk/
-
-RUN pnpm install --frozen-lockfile
-
-COPY . .
-RUN pnpm build --filter nextjs
-
-# Production stage
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-
-COPY --from=builder /app/packages/nextjs/.next ./packages/nextjs/.next
-COPY --from=builder /app/packages/nextjs/public ./packages/nextjs/public
-COPY --from=builder /app/packages/nextjs/package.json ./packages/nextjs/
-
-EXPOSE 3000
-
-CMD ["pnpm", "--filter", "nextjs", "start"]
-```
-
-Build and run:
+### Docker
 
 ```bash
 docker build -t cryptletter .
@@ -140,52 +61,23 @@ docker run -p 3000:3000 cryptletter
 
 ## Post-Deployment Checklist
 
-- [ ] Environment variables configured
-- [ ] Smart contracts deployed to correct network
-- [ ] Contract addresses updated in `deployedContracts.ts`
-- [ ] IPFS gateway accessible
-- [ ] Wallet connection works
-- [ ] Test creator registration
-- [ ] Test newsletter publishing
-- [ ] Test subscription flow
-- [ ] Test content decryption
-- [ ] Check error handling
-- [ ] Verify responsive design
-- [ ] Test on mobile devices
+- [ ] Environment variables set correctly
+- [ ] Contract addresses in `deployedContracts.ts` match network
+- [ ] Wallet connection working
+- [ ] IPFS upload/download working
+- [ ] Newsletter publish flow working
+- [ ] Newsletter decrypt flow working
+- [ ] Subscription payment working
 
 ## Troubleshooting
 
-**Build fails with TypeScript errors:**
-
-```bash
-# Check types first
-pnpm check-types
-
-# Ignore during build (not recommended)
-NEXT_PUBLIC_IGNORE_BUILD_ERROR=true pnpm build
-```
-
-**Environment variables not working:**
-
-- Make sure they start with `NEXT_PUBLIC_`
-- Rebuild after changing env vars
-- Check Vercel dashboard for correct values
-
-**Contract not found:**
-
-- Verify contract is deployed on correct network
-- Check `contracts/deployedContracts.ts` has correct addresses
-- Run `pnpm generate` to update ABIs
-
-**IPFS upload fails:**
-
-- Check IPFS node is running
-- Verify `NEXT_PUBLIC_KUBO_RPC_URL` is correct
-- Try using public gateway as fallback
+| Issue | Solution |
+|-------|----------|
+| Build fails | Run `pnpm check-types` first |
+| Env vars not working | Client vars need `NEXT_PUBLIC_` prefix, rebuild after changes |
+| Contract not found | Check `deployedContracts.ts`, run `pnpm generate` |
+| IPFS upload fails | Verify Pinata JWT and gateway URL |
 
 ---
 
-For more details:
-
-- [Next.js Deployment Docs](https://nextjs.org/docs/deployment)
-- [Vercel Documentation](https://vercel.com/docs)
+**Docs:** [Next.js](https://nextjs.org/docs/deployment) · [Vercel](https://vercel.com/docs)
