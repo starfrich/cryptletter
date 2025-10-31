@@ -126,6 +126,9 @@ describe("IPFS Utilities", () => {
       // Mock fetch to avoid actual network call
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
+        headers: {
+          get: vi.fn().mockReturnValue('application/octet-stream'),
+        },
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(10)),
       });
 
@@ -133,7 +136,8 @@ describe("IPFS Utilities", () => {
 
       expect(result).toBeInstanceOf(Uint8Array);
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining(testCid)
+        expect.stringContaining(testCid),
+        expect.any(Object)
       );
     });
 
@@ -385,6 +389,9 @@ describe("IPFS Utilities", () => {
     it("should download using helper function", async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
+        headers: {
+          get: vi.fn().mockReturnValue('application/octet-stream'),
+        },
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(10)),
       });
 
