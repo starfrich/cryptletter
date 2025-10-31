@@ -1,48 +1,24 @@
 # FHEVM SDK Utils Guide
 
-Comprehensive guide to using the FHEVM SDK utilities for error handling, retries, validation, and debugging.
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Error Handling](#error-handling)
-3. [Retry Logic](#retry-logic)
-4. [Input Validation](#input-validation)
-5. [Debug Logging](#debug-logging)
-6. [IPFS Operations](#ipfs-operations)
-7. [Image Processing](#image-processing)
-8. [Content Encryption](#content-encryption)
-9. [Best Practices](#best-practices)
+Comprehensive guide to FHEVM SDK utilities for error handling, retries, validation, debugging, IPFS operations, and content encryption.
 
 ## Overview
 
-The FHEVM SDK provides a complete toolkit for building robust, production-ready applications:
+The SDK provides utilities for:
 
-- **Error Handling**: Comprehensive error types with user-friendly recovery suggestions
-- **Retry Logic**: Exponential backoff with jitter for resilient operations
-- **Validation**: Type-safe input validation with helpful error messages
-- **Debug Logging**: Structured logging and performance monitoring
-- **IPFS Operations**: Upload, download, pin, and unpin content on IPFS (Cryptletter)
-- **Image Processing**: Extract, encrypt, and upload images from content (Cryptletter)
-- **Content Encryption**: AES encryption for newsletter content with FHE key management (Cryptletter)
-
-### Quick Start
+- **Error Handling**: User-friendly recovery suggestions
+- **Retry Logic**: Exponential backoff with jitter
+- **Validation**: Type-safe input validation
+- **Debug Logging**: Performance monitoring
+- **IPFS Operations**: Upload, download, pin/unpin (Cryptletter)
+- **Image Processing**: Extract, encrypt, upload images (Cryptletter)
+- **Content Encryption**: AES encryption with FHE (Cryptletter)
 
 ```typescript
 import {
-  // Error handling
   getErrorRecoverySuggestion,
-  isRetryable,
-
-  // Retry logic
-  retryAsync,
   retryAsyncOrThrow,
-
-  // Validation
   assertValidAddress,
-  assertValidFhevmType,
-
-  // Debug logging
   enableDebugLogging,
   measureAsync,
 } from "@fhevm-sdk";
@@ -50,284 +26,126 @@ import {
 
 ## Error Handling
 
-The SDK provides structured error handling with automatic recovery suggestions for users.
-
-### Error Types
+### Get Recovery Suggestions
 
 ```typescript
-// FhevmError - Main error type for SDK errors
-try {
-  await someOperation();
-} catch (error) {
-  if (error instanceof FhevmError) {
-    console.error(error.message); // User-friendly message
-    console.error(error.code);    // Error code (FhevmErrorCode)
-  }
-}
-```
-
-### Getting Recovery Suggestions
-
-```typescript
-import {
-  getErrorRecoverySuggestion,
-  formatErrorSuggestion,
-} from "@fhevm-sdk";
+import { getErrorRecoverySuggestion, formatErrorSuggestion } from "@fhevm-sdk";
 
 try {
   await encryptValue(instance, address, user, value, type);
 } catch (error) {
-  // Get structured recovery suggestion
   const suggestion = getErrorRecoverySuggestion(error);
 
-  console.error(suggestion.title);           // e.g., "Encryption Failed"
-  console.error(suggestion.message);         // User-friendly explanation
-  console.error(suggestion.actions);         // Array of recovery steps
-  console.error(suggestion.retryable);       // true/false
+  console.error(suggestion.title);     // "Encryption Failed"
+  console.error(suggestion.message);   // User-friendly explanation
+  console.error(suggestion.actions);   // ["1. ...", "2. ...", "3. ..."]
+  console.error(suggestion.retryable); // true/false
 
-  // Or format it for display
+  // Or format it
   const formatted = formatErrorSuggestion(suggestion);
   console.error(formatted);
 }
 ```
 
-### Checking Error Properties
+### Check Error Properties
 
 ```typescript
-import {
-  isRetryable,
-  isUserActionError,
-  createFhevmErrorWithSuggestion,
-} from "@fhevm-sdk";
+import { isRetryable, isUserActionError } from "@fhevm-sdk";
 
 try {
-  // Some operation
+  await operation();
 } catch (error) {
   if (isRetryable(error)) {
-    // Error can be retried
-    console.log("Error is retryable, will try again");
+    console.log("Can retry");
   }
 
   if (isUserActionError(error)) {
-    // User rejected signature, switched chain, etc.
     console.log("User action required");
   }
 }
 ```
 
-### Common Error Codes
-
-| Code | Meaning | Retryable |
-|------|---------|-----------|
-| `PROVIDER_NOT_FOUND` | No Ethereum provider (MetaMask) | No |
-| `NETWORK_ERROR` | Network connectivity issue | Yes |
-| `UNSUPPORTED_CHAIN` | Chain not supported | No |
-| `CHAIN_MISMATCH` | Wallet on wrong chain | No |
-| `ENCRYPTION_FAILED` | Encryption operation failed | Yes |
-| `DECRYPTION_FAILED` | Decryption operation failed | Yes |
-| `SIGNATURE_REJECTED` | User rejected signature | Yes |
-| `OPERATION_TIMEOUT` | Operation took too long | Yes |
-| `STORAGE_QUOTA_EXCEEDED` | Browser storage full | Yes |
-
 ## Retry Logic
-
-The SDK provides sophisticated retry mechanisms with exponential backoff and jitter.
 
 ### Basic Retry
 
 ```typescript
 import { retryAsync, retryAsyncOrThrow } from "@fhevm-sdk";
 
-// Option 1: Get retry result
-const result = await retryAsync(
-  async () => {
-    return await createFhevmInstance(params);
-  }
-);
+// Get result
+const result = await retryAsync(() => createFhevmInstance(params));
 
 if (result.success) {
-  const instance = result.result;
   console.log(`Success after ${result.attempts} attempts`);
 } else {
-  console.error(`Failed after ${result.attempts} attempts`, result.error);
-  console.log(`Total time spent: ${result.totalTimeMs}ms`);
+  console.error(`Failed after ${result.attempts} attempts`);
 }
 
-// Option 2: Throw on failure
-try {
-  const instance = await retryAsyncOrThrow(
-    async () => createFhevmInstance(params)
-  );
-} catch (error) {
-  console.error("Failed to create instance:", error);
-}
+// Throw on failure
+const instance = await retryAsyncOrThrow(() => createFhevmInstance(params));
 ```
 
 ### Retry Configuration
 
 ```typescript
-import { retryAsync, type RetryOptions } from "@fhevm-sdk";
+const options = {
+  maxRetries: 5,
+  initialDelayMs: 100,
+  maxDelayMs: 10000,
+  backoffMultiplier: 2,
+  useJitter: true,
 
-const options: RetryOptions = {
-  maxRetries: 5,              // Number of retry attempts (default: 3)
-  initialDelayMs: 100,        // First retry delay (default: 100ms)
-  maxDelayMs: 10000,          // Maximum delay (default: 5000ms)
-  backoffMultiplier: 2,       // Exponential backoff factor (default: 2)
-  useJitter: true,            // Add random jitter (default: true)
-
-  // Optional callbacks
   onRetry: (attempt, error, nextDelayMs) => {
     console.log(`Attempt ${attempt} failed, retrying in ${nextDelayMs}ms`);
-    console.log(`Error: ${error.message}`);
   },
-
-  // Optional abort signal to cancel retries
-  signal: abortController.signal,
 };
 
-const result = await retryAsync(
-  async () => createFhevmInstance(params),
-  options
-);
-```
-
-### Retry with Timeout
-
-```typescript
-import { retryAsyncWithTimeout } from "@fhevm-sdk";
-
-// Retry with total timeout constraint
-const result = await retryAsyncWithTimeout(
-  async () => createFhevmInstance(params),
-  10000,  // 10 second total timeout
-  {
-    maxRetries: 3,
-    initialDelayMs: 100,
-  }
-);
-```
-
-### Wrapping Functions
-
-```typescript
-import { retryWrap } from "@fhevm-sdk";
-
-// Create a retryable version of a function
-const createInstanceWithRetry = retryWrap(
-  async (params: any) => createFhevmInstance(params),
-  { maxRetries: 5, initialDelayMs: 200 }
-);
-
-// Use like a normal function
-const result = await createInstanceWithRetry(params);
-if (result.success) {
-  const instance = result.result;
-}
-```
-
-### Sync vs Async
-
-```typescript
-import { retrySync, retrySyncOrThrow } from "@fhevm-sdk";
-
-// Synchronous retry
-const result = retrySync(
-  () => validateAddress(address),
-  { maxRetries: 2 }
-);
-
-// Synchronous with throw
-const isValid = retrySyncOrThrow(
-  () => validateAddress(address),
-  { maxRetries: 2 }
-);
+const result = await retryAsync(() => createFhevmInstance(params), options);
 ```
 
 ## Input Validation
 
-The SDK provides comprehensive validation utilities to ensure correct inputs with helpful error messages.
-
 ### Address Validation
 
 ```typescript
-import {
-  isValidAddress,
-  assertValidAddress,
-  validateAddresses,
-} from "@fhevm-sdk";
+import { isValidAddress, assertValidAddress } from "@fhevm-sdk";
 
-// Check if address is valid
 if (!isValidAddress(address)) {
-  console.error("Invalid address format");
+  console.error("Invalid address");
 }
 
-// Assert and throw on invalid
-try {
-  assertValidAddress(address, "contractAddress");
-} catch (error) {
-  console.error(error.message);
-}
-
-// Validate multiple addresses
-const results = validateAddresses([addr1, addr2, addr3], true);
-results.forEach((isValid, i) => {
-  console.log(`Address ${i}: ${isValid ? "valid" : "invalid"}`);
-});
+// Throw on invalid
+assertValidAddress(address, "contractAddress");
 ```
 
 ### FHEVM Type Validation
 
 ```typescript
-import {
-  isValidFhevmType,
-  assertValidFhevmType,
-  getValidFhevmTypes,
-} from "@fhevm-sdk";
+import { isValidFhevmType, assertValidFhevmType, getValidFhevmTypes } from "@fhevm-sdk";
 
-// Check FHEVM type
 if (!isValidFhevmType("euint32")) {
-  console.error("Invalid FHEVM type");
+  console.error("Invalid type");
 }
 
-// Assert and throw
-try {
-  assertValidFhevmType(userInputType);
-} catch (error) {
-  console.error(`Invalid type: ${error.message}`);
-}
+assertValidFhevmType(userInputType);
 
-// Get list of valid types
-const validTypes = getValidFhevmTypes();
+// Get valid types
+const types = getValidFhevmTypes();
 // ["ebool", "euint8", "euint16", "euint32", "euint64", "euint128", "euint256", "eaddress"]
 ```
 
 ### Value Validation
 
 ```typescript
-import {
-  validateEncryptionValue,
-  assertValidEncryptionValue,
-} from "@fhevm-sdk";
+import { validateEncryptionValue, assertValidEncryptionValue } from "@fhevm-sdk";
 
-// Validate value for a specific FHEVM type
-const isValid = validateEncryptionValue(userValue, "euint32");
+const isValid = validateEncryptionValue(42, "euint32");
 
-if (isValid) {
-  console.log("Value is valid for euint32");
-} else {
-  console.log("Value is out of range for euint32");
-}
-
-// Assert and throw with details
-try {
-  assertValidEncryptionValue(userValue, "euint8");
-} catch (error) {
-  // Error includes helpful range information
-  console.error(error.message);
-}
+// Throw with details
+assertValidEncryptionValue(userValue, "euint8");
 ```
 
-Value ranges by type:
+**Value Ranges:**
 
 | Type | Min | Max |
 |------|-----|-----|
@@ -336,237 +154,58 @@ Value ranges by type:
 | `euint16` | 0 | 65,535 |
 | `euint32` | 0 | 4,294,967,295 |
 | `euint64` | 0 | 18,446,744,073,709,551,615 |
-| `euint128` | 0 | 340,282,366,920,938,463,463,374,607,431,768,211,455 |
-| `euint256` | 0 | 115,792,089,237,316,195,423,570,985,008,687,907,853,269,984,665,640,564,039,457,584,007,913,129,639,935 |
-
-### Chain Validation
-
-```typescript
-import {
-  isValidChainId,
-  isEthereumCompatibleChain,
-  COMMON_CHAIN_IDS,
-} from "@fhevm-sdk";
-
-// Validate chain ID
-if (!isValidChainId(chainId)) {
-  console.error("Invalid chain ID");
-}
-
-// Check if chain is Ethereum-compatible
-if (isEthereumCompatibleChain(31337)) {
-  console.log("Chain is Ethereum-compatible");
-}
-
-// Use common chain IDs
-console.log(COMMON_CHAIN_IDS.HARDHAT);        // 31337
-console.log(COMMON_CHAIN_IDS.SEPOLIA);        // 11155111
-console.log(COMMON_CHAIN_IDS.ETHEREUM);       // 1
-console.log(COMMON_CHAIN_IDS.POLYGON);        // 137
-console.log(COMMON_CHAIN_IDS.POLYGON_MUMBAI); // 80001
-```
-
-### Hex String Validation
-
-```typescript
-import {
-  isValidHex,
-  normalizeHex,
-} from "@fhevm-sdk";
-
-// Check if valid hex
-if (!isValidHex("0xdeadbeef")) {
-  console.error("Invalid hex string");
-}
-
-// Normalize hex (ensure 0x prefix)
-const normalized = normalizeHex("deadbeef");
-console.log(normalized); // "0xdeadbeef"
-```
-
-### Parameter Validation
-
-```typescript
-import {
-  assertDefined,
-  assertRequiredParams,
-  assertNotEmpty,
-  assertNotEmptyArray,
-} from "@fhevm-sdk";
-
-// Check parameter is defined
-try {
-  assertDefined(userInput, "userInput");
-} catch {
-  console.error("userInput is required");
-}
-
-// Check multiple required parameters
-try {
-  assertRequiredParams(params, ["address", "value", "type"]);
-} catch {
-  console.error("Missing required parameters");
-}
-
-// Check string is not empty
-try {
-  assertNotEmpty(userMessage, "Message");
-} catch {
-  console.error("Message cannot be empty");
-}
-
-// Check array is not empty
-try {
-  assertNotEmptyArray(items, "Items");
-} catch {
-  console.error("Items array cannot be empty");
-}
-```
 
 ## Debug Logging
 
-The SDK provides structured debug logging with performance monitoring.
-
-### Enable Debug Logging
+### Enable Debugging
 
 ```typescript
-import {
-  enableDebugLogging,
-  disableDebugLogging,
-  setDebugLevel,
-} from "@fhevm-sdk";
+import { enableDebugLogging, debug, info, warn, error } from "@fhevm-sdk";
 
-// Enable with all options
 enableDebugLogging({
-  verbose: true,              // Enable verbose logging
-  metrics: true,              // Record performance metrics
-  stackTrace: true,           // Include stack traces in logs
-  prefix: "[My App]",         // Custom log prefix
-  level: "debug",             // Log level: debug, info, warn, error
+  verbose: true,
+  metrics: true,
+  level: "debug",
 });
 
-// Or just enable verbose mode
-enableDebugLogging({ verbose: true });
-
-// Change log level
-setDebugLevel("warn");
-
-// Disable all logging
-disableDebugLogging();
-```
-
-### Logging Functions
-
-```typescript
-import {
-  debug,
-  info,
-  warn,
-  error,
-} from "@fhevm-sdk";
-
-// Log at different levels
-debug("Detailed debugging information", { data: value });
-info("Operation completed", { result });
-warn("Deprecated API being used", { apiName: "oldFunction" });
+debug("Operation started", { userId: 123 });
+info("Operation completed");
+warn("Deprecated API");
 error("Operation failed", errorObject);
 ```
 
 ### Performance Monitoring
 
 ```typescript
-import {
-  startTimer,
-  measureAsync,
-  measureSync,
-  getMetrics,
-  getPerformanceSummary,
-  clearMetrics,
-} from "@fhevm-sdk";
+import { startTimer, measureAsync, getPerformanceSummary } from "@fhevm-sdk";
 
-// Measure async operation
-const result = await measureAsync(
-  "create_instance",
-  () => createFhevmInstance(params)
-);
-
-// Or use startTimer for manual control
-const stopTimer = startTimer("encryption", { value: 42 });
-await encryptValue(instance, address, user, value, type);
+// Manual timing
+const stopTimer = startTimer("my_operation");
+await someWork();
 const metric = stopTimer();
 console.log(`Took ${metric.durationMs}ms`);
 
-// Measure sync operation
-const result = measureSync(
-  "validate_address",
-  () => validateAddress(address)
-);
+// Auto timing
+const result = await measureAsync("create_instance", () => createFhevmInstance(params));
 
-// Get all recorded metrics
-const metrics = getMetrics();
-metrics.forEach(m => {
-  console.log(`${m.name}: ${m.durationMs}ms`);
-});
-
-// Get performance summary
-const summary = getPerformanceSummary();
-console.table(summary);
+// Get summary
+console.table(getPerformanceSummary());
 // [
-//   { name: 'encrypt', count: 5, avgDurationMs: 245, minDurationMs: 200, maxDurationMs: 310 },
-//   { name: 'decrypt', count: 3, avgDurationMs: 180, minDurationMs: 150, maxDurationMs: 210 }
+//   { name: 'encrypt', count: 10, avgDurationMs: 245, minDurationMs: 200, maxDurationMs: 310 }
 // ]
-
-// Clear metrics
-clearMetrics();
-```
-
-### Debug Groups
-
-```typescript
-import { createDebugGroup } from "@fhevm-sdk";
-
-const { log, end } = createDebugGroup("Encryption Process");
-log("Starting encryption...");
-log("Value:", value);
-log("Type:", type);
-end();
-
-// Output:
-// [FHEVM SDK] Encryption Process
-//   Starting encryption...
-//   Value: 42
-//   Type: euint32
-```
-
-### Object Formatting
-
-```typescript
-import { formatObject } from "@fhevm-sdk";
-
-const complex = {
-  name: "John",
-  data: [1, 2, 3],
-  nested: { key: "value" }
-};
-
-const formatted = formatObject(complex, 2);
-console.log(formatted);
-// {name: John, data: [1, 2, 3], nested: {key: value}}
 ```
 
 ## IPFS Operations
 
-The SDK provides utilities for working with IPFS (InterPlanetary File System) for decentralized content storage.
-
 ### Create IPFS Client
 
 ```typescript
-import { createIPFSClient, IPFSClient } from "@fhevm-sdk";
+import { createIPFSClient } from "@fhevm-sdk";
 
-// Create client with default configuration (localhost:5001)
+// Default (localhost:5001)
 const ipfs = createIPFSClient();
 
-// Or with custom configuration
+// Custom config
 const ipfs = createIPFSClient({
   host: "ipfs.infura.io",
   port: 5001,
@@ -575,184 +214,56 @@ const ipfs = createIPFSClient({
     authorization: `Basic ${btoa(`${projectId}:${projectSecret}`)}`,
   },
 });
-
-// Or use the class directly
-const ipfs = new IPFSClient({
-  host: "127.0.0.1",
-  port: 5001,
-  protocol: "http",
-});
 ```
 
-### Upload Content to IPFS
+### Upload/Download
 
 ```typescript
-import { uploadToIPFS } from "@fhevm-sdk";
+import { uploadToIPFS, downloadFromIPFS } from "@fhevm-sdk";
 
-// Upload JSON data
-const jsonData = {
-  title: "My Newsletter",
-  content: "Newsletter content...",
-  timestamp: Date.now(),
-};
-
+// Upload
+const jsonData = { title: "My Newsletter", content: "..." };
 const result = await uploadToIPFS(ipfs, JSON.stringify(jsonData));
-console.log(`Uploaded to IPFS: ${result.cid}`);
-console.log(`Size: ${result.size} bytes`);
-console.log(`Path: ${result.path}`);
+console.log(`Uploaded: ${result.cid}`);
 
-// Upload binary data
-const binaryData = new Uint8Array([1, 2, 3, 4, 5]);
-const result = await uploadToIPFS(ipfs, binaryData);
-
-// Upload with custom filename
-const result = await uploadToIPFS(ipfs, content, "newsletter.json");
-```
-
-### Download Content from IPFS
-
-```typescript
-import { downloadFromIPFS } from "@fhevm-sdk";
-
-// Download by CID
-const content = await downloadFromIPFS(
-  ipfs,
-  "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"
-);
-
-console.log("Downloaded content:", content);
-
-// Content is returned as Uint8Array
-// Convert to string if needed
+// Download
+const content = await downloadFromIPFS(ipfs, result.cid);
 const text = new TextDecoder().decode(content);
 const json = JSON.parse(text);
 ```
 
-### Pin Content
+### Pin/Unpin
 
 ```typescript
-import { pinContent } from "@fhevm-sdk";
+import { pinContent, unpinContent } from "@fhevm-sdk";
 
-// Pin content to ensure it persists
-const result = await pinContent(
-  ipfs,
-  "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"
-);
+// Pin for persistence
+await pinContent(ipfs, cid);
 
-console.log(`Pinned: ${result.cid}`);
+// Unpin when done
+await unpinContent(ipfs, cid);
 ```
-
-### Unpin Content
-
-```typescript
-import { unpinContent } from "@fhevm-sdk";
-
-// Unpin content when no longer needed
-await unpinContent(
-  ipfs,
-  "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"
-);
-
-console.log("Content unpinned");
-```
-
-### Complete IPFS Workflow
-
-```typescript
-import {
-  createIPFSClient,
-  uploadToIPFS,
-  downloadFromIPFS,
-  pinContent,
-  unpinContent,
-} from "@fhevm-sdk";
-
-async function workflowExample() {
-  // 1. Create client
-  const ipfs = createIPFSClient();
-
-  // 2. Upload content
-  const content = { message: "Hello IPFS!" };
-  const uploadResult = await uploadToIPFS(ipfs, JSON.stringify(content));
-  console.log(`Uploaded: ${uploadResult.cid}`);
-
-  // 3. Pin for persistence
-  await pinContent(ipfs, uploadResult.cid);
-  console.log("Content pinned");
-
-  // 4. Download content
-  const downloaded = await downloadFromIPFS(ipfs, uploadResult.cid);
-  const text = new TextDecoder().decode(downloaded);
-  console.log("Downloaded:", JSON.parse(text));
-
-  // 5. Unpin when done
-  await unpinContent(ipfs, uploadResult.cid);
-  console.log("Content unpinned");
-}
-```
-
----
 
 ## Image Processing
 
-The SDK provides utilities for extracting, encrypting, and processing images in content.
-
-### Extract Images from JSON
+### Extract Images
 
 ```typescript
 import { extractBase64ImagesFromJson } from "@fhevm-sdk";
 
 const editorContent = {
   type: "doc",
-  content: [
-    {
-      type: "image",
-      attrs: {
-        src: "data:image/png;base64,iVBORw0KGgoAAAANS...",
-      },
-    },
-  ],
+  content: [{
+    type: "image",
+    attrs: { src: "data:image/png;base64,iVBORw0KGgo..." },
+  }],
 };
 
-// Extract all base64 images
 const images = extractBase64ImagesFromJson(editorContent);
-
-images.forEach((img, index) => {
-  console.log(`Image ${index}:`);
-  console.log(`  Type: ${img.type}`); // "image/png"
-  console.log(`  Data length: ${img.data.length} bytes`);
-  console.log(`  Original: ${img.originalSrc.substring(0, 50)}...`);
+images.forEach((img) => {
+  console.log(`Type: ${img.type}`);
+  console.log(`Data length: ${img.data.length} bytes`);
 });
-```
-
-### Convert Base64 to Uint8Array
-
-```typescript
-import { base64ToUint8Array } from "@fhevm-sdk";
-
-// Convert base64 string to Uint8Array
-const base64 = "SGVsbG8gV29ybGQh";
-const uint8Array = base64ToUint8Array(base64);
-
-console.log(uint8Array); // Uint8Array(12) [72, 101, 108, 108, 111, ...]
-```
-
-### Encrypt and Decrypt Images
-
-```typescript
-import { encryptImage, decryptImage } from "@fhevm-sdk";
-
-// Encrypt image data
-const imageData = new Uint8Array([...]); // Image bytes
-const key = await generateAESKey(); // From content encryption
-const iv = generateIV();
-
-const encrypted = await encryptImage(imageData, key, iv);
-console.log(`Encrypted image: ${encrypted.length} bytes`);
-
-// Decrypt image data
-const decrypted = await decryptImage(encrypted, key, iv);
-console.log(`Decrypted image: ${decrypted.length} bytes`);
 ```
 
 ### Upload Images to IPFS
@@ -761,129 +272,60 @@ console.log(`Decrypted image: ${decrypted.length} bytes`);
 import { uploadImagesToIPFS } from "@fhevm-sdk";
 
 const images = [
-  {
-    type: "image/png",
-    data: new Uint8Array([...]),
-    originalSrc: "data:image/png;base64,...",
-  },
-  {
-    type: "image/jpeg",
-    data: new Uint8Array([...]),
-    originalSrc: "data:image/jpeg;base64,...",
-  },
+  { type: "image/png", data: new Uint8Array([...]), originalSrc: "data:..." },
 ];
 
-// Upload all images and get CIDs
 const uploaded = await uploadImagesToIPFS(ipfs, images);
-
-uploaded.forEach((result, index) => {
-  console.log(`Image ${index}:`);
-  console.log(`  CID: ${result.cid}`);
-  console.log(`  Type: ${result.type}`);
-  console.log(`  Original: ${result.originalSrc.substring(0, 50)}...`);
+uploaded.forEach((result) => {
+  console.log(`CID: ${result.cid}`);
 });
 ```
 
 ### Replace Images in Content
 
 ```typescript
-import { replaceImagesInJson, replaceImagesInHtml } from "@fhevm-sdk";
+import { replaceImagesInJson } from "@fhevm-sdk";
 
-// Replace images in JSON (TipTap editor format)
-const editorContent = { /* ... */ };
 const uploadedImages = [
-  {
-    cid: "QmABC123...",
-    type: "image/png",
-    originalSrc: "data:image/png;base64,...",
-  },
+  { cid: "QmABC123...", type: "image/png", originalSrc: "data:..." },
 ];
 
 const updated = replaceImagesInJson(editorContent, uploadedImages);
-console.log("Images replaced with IPFS CIDs");
-
-// Replace images in HTML
-const html = '<img src="data:image/png;base64,..." />';
-const updatedHtml = replaceImagesInHtml(html, uploadedImages);
-console.log(updatedHtml); // '<img src="ipfs://QmABC123..." />'
 ```
-
-### Process Newsletter Images
-
-```typescript
-import { processNewsletterImages } from "@fhevm-sdk";
-
-const newsletter = {
-  title: "My Newsletter",
-  content: {
-    type: "doc",
-    content: [
-      {
-        type: "image",
-        attrs: { src: "data:image/png;base64,..." },
-      },
-    ],
-  },
-};
-
-// Extract, upload, and replace images in one call
-const { updatedContent, uploadedImages } = await processNewsletterImages(
-  ipfs,
-  newsletter.content
-);
-
-console.log(`Processed ${uploadedImages.length} images`);
-console.log("Updated content:", updatedContent);
-```
-
----
 
 ## Content Encryption
 
-The SDK provides AES encryption utilities for encrypting newsletter content with FHE key management.
-
-### Generate Encryption Keys
+### Generate Keys
 
 ```typescript
 import { generateAESKey, generateIV } from "@fhevm-sdk";
 
-// Generate 256-bit AES key
+// 256-bit AES key
 const key = await generateAESKey();
-console.log(`Key length: ${key.length} bytes`); // 32 bytes
+console.log(`Key: ${key.length} bytes`); // 32 bytes
 
-// Generate initialization vector
+// Initialization vector
 const iv = generateIV();
-console.log(`IV length: ${iv.length} bytes`); // 12 bytes
+console.log(`IV: ${iv.length} bytes`); // 12 bytes
 ```
 
-### Encrypt and Decrypt Content
+### Encrypt/Decrypt Content
 
 ```typescript
-import {
-  encryptContent,
-  decryptContent,
-  generateAESKey,
-  generateIV,
-} from "@fhevm-sdk";
+import { encryptContent, decryptContent } from "@fhevm-sdk";
 
-// Prepare content
-const content = JSON.stringify({
-  title: "Private Newsletter",
-  body: "Confidential content...",
-});
+const content = JSON.stringify({ title: "Private", body: "Confidential" });
 
 // Generate encryption materials
 const key = await generateAESKey();
 const iv = generateIV();
 
-// Encrypt content
+// Encrypt
 const encrypted = await encryptContent(content, key, iv);
-console.log(`Encrypted: ${encrypted.length} bytes`);
 
-// Decrypt content
+// Decrypt
 const decrypted = await decryptContent(encrypted, key, iv);
 const original = JSON.parse(decrypted);
-console.log("Decrypted:", original);
 ```
 
 ### Convert Keys for FHE
@@ -891,70 +333,16 @@ console.log("Decrypted:", original);
 ```typescript
 import { aesKeyToFHEInput, fheOutputToAESKey } from "@fhevm-sdk";
 
-// Convert AES key to FHE input format (array of euint8 values)
+// Convert AES key to FHE input (32 euint8 values)
 const key = await generateAESKey();
 const fheInput = aesKeyToFHEInput(key);
-console.log(`FHE input length: ${fheInput.length}`); // 32 euint8 values
 
 // Convert FHE output back to AES key
 const fheOutput = [/* decrypted euint8 values */];
 const reconstructedKey = fheOutputToAESKey(fheOutput);
-console.log(`Reconstructed key: ${reconstructedKey.length} bytes`);
 ```
 
-### Create Preview
-
-```typescript
-import { createPreview } from "@fhevm-sdk";
-
-const fullContent = `
-  <h1>Newsletter Title</h1>
-  <p>First paragraph with some content...</p>
-  <p>Second paragraph with more content...</p>
-  <p>Third paragraph...</p>
-`;
-
-// Create preview (first 200 characters + ellipsis)
-const preview = createPreview(fullContent);
-console.log(preview);
-// "Newsletter Title First paragraph with some content... Second paragraph with more content... Third paragraph..."
-
-// Custom length
-const shortPreview = createPreview(fullContent, 100);
-console.log(shortPreview);
-```
-
-### Serialize and Deserialize Bundles
-
-```typescript
-import {
-  serializeBundle,
-  deserializeBundle,
-  type EncryptedBundle,
-} from "@fhevm-sdk";
-
-// Create encrypted bundle
-const bundle: EncryptedBundle = {
-  version: 1,
-  encrypted: new Uint8Array([1, 2, 3, 4]),
-  iv: new Uint8Array([5, 6, 7, 8]),
-  authTag: new Uint8Array([9, 10, 11, 12]),
-  metadata: {
-    encryptedAt: Date.now(),
-    contentType: "application/json",
-  },
-};
-
-// Serialize to base64 string for storage/transmission
-const serialized = serializeBundle(bundle);
-console.log(`Serialized: ${serialized.length} characters`);
-
-// Deserialize back to bundle
-const deserialized = deserializeBundle(serialized);
-console.log("Deserialized:", deserialized);
-```
-
-### Complete Encryption Workflow
+### Complete Workflow
 
 ```typescript
 import {
@@ -965,10 +353,9 @@ import {
   uploadToIPFS,
   aesKeyToFHEInput,
   createIPFSClient,
-  type EncryptedBundle,
 } from "@fhevm-sdk";
 
-async function encryptAndUploadNewsletter(newsletter: any) {
+async function encryptAndUpload(newsletter) {
   // 1. Generate encryption materials
   const key = await generateAESKey();
   const iv = generateIV();
@@ -977,220 +364,92 @@ async function encryptAndUploadNewsletter(newsletter: any) {
   const content = JSON.stringify(newsletter);
   const encrypted = await encryptContent(content, key, iv);
 
-  // 3. Create encrypted bundle
-  const bundle: EncryptedBundle = {
+  // 3. Create bundle
+  const bundle = {
     version: 1,
     encrypted,
     iv,
-    authTag: encrypted.slice(-16), // Last 16 bytes
+    authTag: encrypted.slice(-16),
     metadata: {
       encryptedAt: Date.now(),
       contentType: "application/json",
     },
   };
 
-  // 4. Serialize bundle
+  // 4. Serialize
   const serialized = serializeBundle(bundle);
 
   // 5. Upload to IPFS
   const ipfs = createIPFSClient();
   const result = await uploadToIPFS(ipfs, serialized);
-  console.log(`Uploaded to IPFS: ${result.cid}`);
 
-  // 6. Convert key for FHE storage on blockchain
-  const fheInput = aesKeyToFHEInput(key);
-  console.log(`FHE input ready: ${fheInput.length} values`);
+  // 6. Convert key for FHE storage
+  const fheKeyInput = aesKeyToFHEInput(key);
 
   return {
     ipfsCid: result.cid,
-    fheKeyInput: fheInput,
+    fheKeyInput,
     iv,
   };
 }
 ```
 
----
-
 ## Best Practices
 
-### Error Handling Patterns
+### Error Handling
 
 ```typescript
-// 1. Get recovery suggestions and show to user
+// 1. Get suggestions
 try {
   await operation();
 } catch (error) {
   const suggestion = getErrorRecoverySuggestion(error);
-  // Show suggestion to user in UI
-  displayErrorToUser({
-    title: suggestion.title,
-    message: suggestion.message,
-    actions: suggestion.actions,
-  });
+  displayErrorToUser(suggestion);
 }
 
-// 2. Retry with user feedback
-try {
-  const result = await retryAsyncOrThrow(
-    () => operation(),
-    {
-      maxRetries: 3,
-      onRetry: (attempt, error, delay) => {
-        console.log(`Retrying (${attempt}/3) in ${delay}ms...`);
-      }
+// 2. Retry with feedback
+const result = await retryAsyncOrThrow(
+  () => operation(),
+  {
+    maxRetries: 3,
+    onRetry: (attempt, error, delay) => {
+      console.log(`Retrying (${attempt}/3) in ${delay}ms...`);
     }
-  );
-} catch (error) {
-  handleError(error);
-}
-
-// 3. Combine error handling with UI feedback
-function handleError(error: unknown) {
-  if (isUserActionError(error)) {
-    // User needs to take action
-    showUserActionRequired(error);
-  } else if (isRetryable(error)) {
-    // Could be retried automatically
-    retryOperation();
-  } else {
-    // Fatal error
-    showFatalError(error);
   }
-}
+);
 ```
 
-### Validation Patterns
+### Validation
 
 ```typescript
-// 1. Validate early in functions
-async function encryptUserValue(address: string, value: unknown, type: string) {
-  assertValidAddress(address, "address");
+// Validate early
+async function encryptUserValue(address, value, type) {
+  assertValidAddress(address);
   assertValidFhevmType(type);
-  assertValidEncryptionValue(value, type as FhevmEncryptedType);
+  assertValidEncryptionValue(value, type);
 
-  // Proceed with validated inputs
   return await encryptValue(instance, address, user, value, type);
 }
-
-// 2. Provide helpful error messages
-try {
-  assertValidAddress(userInput);
-} catch {
-  throw new Error(
-    "Invalid contract address. Expected 42-character hex string starting with 0x"
-  );
-}
-
-// 3. Batch validate multiple inputs
-async function processValues(
-  addresses: unknown[],
-  values: unknown[]
-) {
-  assertNotEmptyArray(addresses, "addresses");
-  assertNotEmptyArray(values, "values");
-
-  if (addresses.length !== values.length) {
-    throw new Error("addresses and values must have same length");
-  }
-
-  // Validate all addresses
-  addresses.forEach((addr, i) => {
-    try {
-      assertValidAddress(addr, `addresses[${i}]`);
-    } catch (error) {
-      throw new Error(`Invalid address at index ${i}: ${error.message}`);
-    }
-  });
-
-  // Process valid inputs
-}
 ```
 
-### Performance Monitoring Patterns
+### Performance Monitoring
 
 ```typescript
-// 1. Profile critical operations
+// Profile critical operations
 async function criticalOperation() {
   return await measureAsync(
-    "critical_operation",
+    "critical_op",
     () => expensiveOperation(),
-    { userId: currentUser.id, operationType: "batch" }
+    { userId: currentUser.id }
   );
 }
 
-// 2. Monitor performance over time
+// Monitor over time
 setInterval(() => {
   const summary = getPerformanceSummary();
-  const slowOperations = summary.filter(s => s.avgDurationMs > 1000);
-
-  if (slowOperations.length > 0) {
-    console.warn("Slow operations detected:", slowOperations);
+  const slowOps = summary.filter(s => s.avgDurationMs > 1000);
+  if (slowOps.length > 0) {
+    console.warn("Slow operations:", slowOps);
   }
-}, 60000); // Every minute
-
-// 3. Debug performance issues
-enableDebugLogging({
-  metrics: true,
-  verbose: true,
-});
-
-// ... run operations ...
-
-const metrics = getMetrics();
-const byName = new Map();
-metrics.forEach(m => {
-  if (!byName.has(m.name)) {
-    byName.set(m.name, []);
-  }
-  byName.get(m.name).push(m);
-});
-
-// Analyze outliers
-byName.forEach((metrics, name) => {
-  const durations = metrics.map(m => m.durationMs);
-  const avg = durations.reduce((a, b) => a + b) / durations.length;
-  const outliers = durations.filter(d => d > avg * 2);
-
-  if (outliers.length > 0) {
-    console.log(`${name} has ${outliers.length} slow executions:`, outliers);
-  }
-});
-```
-
-### Debug Logging Patterns
-
-```typescript
-// 1. Context-aware debugging
-function createDebugContext(operation: string) {
-  const { log, end } = createDebugGroup(operation);
-  const startTime = performance.now();
-
-  return {
-    log,
-    step: (stepName: string, data?: any) => {
-      const elapsed = performance.now() - startTime;
-      log(`[${elapsed.toFixed(0)}ms] ${stepName}`, data);
-    },
-    end,
-  };
-}
-
-// Usage
-const debug = createDebugContext("Encryption");
-debug.step("Validating inputs", { value });
-await validateInputs(value);
-debug.step("Creating encryption", { type });
-const encrypted = await createEncryption(value, type);
-debug.end();
-
-// 2. Conditional debugging
-function debugIf(condition: boolean, message: string, data?: any) {
-  if (condition) {
-    debug(message, data);
-  }
-}
-
-const isDevMode = process.env.NODE_ENV === "development";
-debugIf(isDevMode, "Development mode enabled");
-debugIf(isDevMode, "Current state", globalState);
+}, 60000);
 ```
