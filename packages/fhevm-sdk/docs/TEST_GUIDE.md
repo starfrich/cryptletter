@@ -10,7 +10,6 @@ The FHEVM SDK uses **Vitest** for unit testing with the following setup:
 - **Test Environment**: jsdom (for DOM testing)
 - **Coverage Tool**: v8
 - **React Testing**: @testing-library/react
-- **Vue Testing**: @testing-library/vue
 - **Target Coverage**: >80% across all modules
 
 ## Running Tests
@@ -113,25 +112,6 @@ it("encrypts with useFHEEncryption", async () => {
 
   expect(encrypted).toBeDefined();
 });
-```
-
-### Vue Composables Tests (`test/vue/`)
-
-Tests Vue-specific composables and plugins:
-- `FhevmPlugin.test.ts` - Vue plugin for global FHEVM instance
-- `useFhevm.test.ts` - Main FHEVM composable with reactivity
-- `useFHEDecrypt.test.ts` - Decryption composable with ref support
-- `useInMemoryStorage.test.ts` - In-memory storage composable
-- `composables.test.ts` - Legacy composable tests
-
-**Key difference from React**: Vue tests use refs and verify reactivity:
-```typescript
-const instanceRef = ref<FhevmInstance | undefined>(undefined);
-const result = useFHEEncryption({ instance: instanceRef, ... });
-
-expect(result.canEncrypt.value).toBe(false);
-instanceRef.value = mockInstance;
-expect(result.canEncrypt.value).toBe(true);
 ```
 
 ### Storage Tests (`test/storage/`)
@@ -374,66 +354,64 @@ Husky pre-commit hooks run TypeScript type checking before commits.
 
 After implementing all tests:
 ```json
-Test Files  42 passed (42)
-      Tests  1219 passed (1219)
-   Start at  21:41:14
-   Duration  28.54s (transform 6.27s, setup 97.05s, collect 22.62s, tests 43.89s, environment 32.01s, prepare 16.71s)
+Test Files  39 passed (39)
+      Tests  1241 passed (1241)
+   Start at  03:47:02
+   Duration  14.98s (transform 7.36s, setup 93.80s, collect 24.68s, tests 20.62s, environment 42.73s, prepare 17.14s)
 ```
-| File / Folder                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Lines                                                                                           |
-| ------------------------------ | ------- | -------- | ------- | ------- | --------------------------------------------------------------------------------------------------------- |
-| All files                      | 92.14   | 90       | 97.1    | 92.14   | -                                                                                                         |
-| src                            | 96.35   | 98.01    | 88.88   | 96.35   | -                                                                                                         |
-| ├─ FhevmDecryptionSignature.ts | 96.35   | 98.01    | 88.88   | 96.35   | 72-73,77-78,81-82,85-86,258-259                                                                           |
-| ├─ fhevmTypes.ts               | 0       | 0        | 0       | 0       | -                                                                                                         |
-| src/core                       | 79.66   | 85.09    | 96.55   | 79.66   | -                                                                                                         |
-| ├─ decryption.ts               | 100     | 96.29    | 100     | 100     | 134                                                                                                       |
-| ├─ encryption.ts               | 99.27   | 98.27    | 100     | 99.27   | 151                                                                                                       |
-| ├─ instance-node.ts            | 55.95   | 77.77    | 100     | 55.95   | 76-93,124-158                                                                                             |
-| ├─ instance.ts                 | 66.82   | 68.96    | 92.3    | 66.82   | 40-41,58-59,63-64,73-74,76-77,129,134-135,137-143,146-152,155-161,164-170,176-190,294-313,323-326,344-345 |
-| ├─ types.ts                    | 100     | 100      | 100     | 100     | -                                                                                                         |
-| src/internal                   | 94.4    | 86.88    | 100     | 94.4    | -                                                                                                         |
-| ├─ PublicKeyStorage.ts         | 90.62   | 86.79    | 100     | 90.62   | 68-69,80-81,91-92,103-104,130,141,176-177                                                                 |
-| ├─ RelayerSDKLoader.ts         | 97.41   | 86.95    | 100     | 97.41   | 173-174,190-191                                                                                           |
-| ├─ constants.ts                | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ fhevm.ts                    | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ fhevmTypes.ts               | 0       | 0        | 0       | 0       | -                                                                                                         |
-| src/internal/mock              | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ fhevmMock.ts                | 100     | 100      | 100     | 100     | -                                                                                                         |
-| src/react                      | 90.84   | 87.36    | 95      | 90.84   | -                                                                                                         |
-| ├─ FhevmProvider.tsx           | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ useFHEDecrypt.ts            | 88.71   | 87.69    | 80      | 88.71   | 203-208,235-240,261-266,288-291                                                                           |
-| ├─ useFHEEncryption.ts         | 87.91   | 76.19    | 100     | 87.91   | 116-124,169-170                                                                                           |
-| ├─ useFhevm.tsx                | 95.36   | 90.76    | 100     | 95.36   | 9-11,196,265-266,278-280                                                                                  |
-| ├─ useFhevmInstance.ts         | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ useFhevmStatus.ts           | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ useInMemoryStorage.tsx      | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ useStorage.tsx              | 82.19   | 84.61    | 100     | 82.19   | 84-89,107-114                                                                                             |
-| ├─ useWalletCallbacks.ts       | 88.46   | 80       | 100     | 88.46   | 69-70,78-79,86-87                                                                                         |
-| src/storage                    | 89.64   | 95.23    | 100     | 89.64   | -                                                                                                         |
-| ├─ GenericStringStorage.ts     | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ indexeddb.ts                | 84.55   | 88.88    | 100     | 84.55   | 100-101,131-136,140-141,166-167,182-190                                                                   |
-| ├─ localstorage.ts             | 89.03   | 98       | 100     | 89.03   | 56-57,79-83,163-167,185-189                                                                               |
-| ├─ memory.ts                   | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ types.ts                    | 100     | 100      | 100     | 100     | -                                                                                                         |
-| src/types                      | 100     | 97.87    | 100     | 100     | -                                                                                                         |
-| ├─ callbacks.ts                | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ errors.ts                   | 100     | 96.77    | 100     | 100     | 317                                                                                                       |
-| ├─ fhevm.ts                    | 0       | 0        | 0       | 0       | -                                                                                                         |
-| ├─ storage.ts                  | 0       | 0        | 0       | 0       | -                                                                                                         |
-| src/utils                      | 98.26   | 93.62    | 100     | 98.26   | -                                                                                                         |
-| ├─ debug.ts                    | 98.9    | 97.67    | 100     | 98.9    | 202,549-550                                                                                               |
-| ├─ errors.ts                   | 100     | 91.3     | 100     | 100     | 365,387                                                                                                   |
-| ├─ retry.ts                    | 97.1    | 84.78    | 100     | 97.1    | 234-236,431-433                                                                                           |
-| ├─ validation.ts               | 96.44   | 94.79    | 100     | 96.44   | 104-105,240-241,262-263,377-381                                                                           |
-| src/vanilla                    | 98.48   | 100      | 94.44   | 98.48   | -                                                                                                         |
-| ├─ FhevmClient.ts              | 97.46   | 100      | 92.3    | 97.46   | 89-90                                                                                                     |
-| ├─ helpers.ts                  | 100     | 100      | 100     | 100     | -                                                                                                         |
-| src/vue                        | 87.05   | 80       | 94.73   | 87.05   | -                                                                                                         |
-| ├─ FhevmPlugin.ts              | 100     | 100      | 100     | 100     | -                                                                                                         |
-| ├─ useFHEDecrypt.ts            | 83.33   | 75.86    | 100     | 83.33   | 145-148,159,228-232,259-263,296-300,317-318,325-328,342-343,357-360,365-368                               |
-| ├─ useFHEEncryption.ts         | 91.05   | 84.84    | 100     | 91.05   | 149-157,220-221                                                                                           |
-| ├─ useFhevm.ts                 | 84.66   | 75.55    | 85.71   | 84.66   | 147,216-217,251-256,259-264,268-269,290-297                                                               |
-| ├─ useInMemoryStorage.ts       | 100     | 100      | 100     | 100     | -                                                                                                         |
+
+| File                        | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                                                                   |
+| --------------------------- | ------- | -------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| All files                   | 94.41   | 88.65    | 97.66   | 94.41   |                                                                                                                     |
+| src                         | 96.35   | 98.01    | 88.88   | 96.35   |                                                                                                                     |
+| FhevmDecryptionSignature.ts | 96.35   | 98.01    | 88.88   | 96.35   | 72-73,77-78,81-82,85-86,258-259                                                                                     |
+| fhevmTypes.ts               | 0       | 0        | 0       | 0       |                                                                                                                     |
+| src/core                    | 94.69   | 90.9     | 95.45   | 94.69   |                                                                                                                     |
+| cryptletter.ts              | 95.42   | 82.75    | 94.73   | 95.42   | 249-250,255-256,268-269,322-323,469-471,515,578-579,663-664                                                         |
+| decryption.ts               | 100     | 96.29    | 100     | 100     | 134                                                                                                                 |
+| encryption.ts               | 99.27   | 98.27    | 100     | 99.27   | 151                                                                                                                 |
+| instance.ts                 | 87.86   | 89.39    | 92.3    | 87.86   | 40-41,57-66,73-74,301-304,314-317,322-329                                                                           |
+| types.ts                    | 100     | 100      | 100     | 100     |                                                                                                                     |
+| src/internal                | 94.4    | 86.88    | 100     | 94.4    |                                                                                                                     |
+| PublicKeyStorage.ts         | 90.62   | 86.79    | 100     | 90.62   | 68-69,80-81,91-92,103-104,130,141,176-177                                                                           |
+| RelayerSDKLoader.ts         | 97.41   | 86.95    | 100     | 97.41   | 173-174,190-191                                                                                                     |
+| constants.ts                | 100     | 100      | 100     | 100     |                                                                                                                     |
+| fhevm.ts                    | 100     | 100      | 100     | 100     |                                                                                                                     |
+| fhevmTypes.ts               | 0       | 0        | 0       | 0       |                                                                                                                     |
+| src/internal/mock           | 100     | 100      | 100     | 100     |                                                                                                                     |
+| fhevmMock.ts                | 100     | 100      | 100     | 100     |                                                                                                                     |
+| src/react                   | 94.82   | 82.56    | 95.65   | 94.82   |                                                                                                                     |
+| FhevmProvider.tsx           | 100     | 100      | 100     | 100     |                                                                                                                     |
+| useCreatorProfile.ts        | 100     | 100      | 100     | 100     |                                                                                                                     |
+| useCryptletter.ts           | 98.73   | 58.42    | 100     | 98.73   | 139-142                                                                                                             |
+| useFHEDecrypt.ts            | 88.71   | 87.69    | 80      | 88.71   | 203-208,235-240,261-266,288-291                                                                                     |
+| useFHEEncryption.ts         | 87.91   | 76.19    | 100     | 87.91   | 116-124,169-170                                                                                                     |
+| useFhevm.tsx                | 95.36   | 90.76    | 100     | 95.36   | 9-11,196,265-266,278-280                                                                                            |
+| useFhevmInstance.ts         | 100     | 100      | 100     | 100     |                                                                                                                     |
+| useFhevmStatus.ts           | 100     | 100      | 100     | 100     |                                                                                                                     |
+| useInMemoryStorage.tsx      | 100     | 100      | 100     | 100     |                                                                                                                     |
+| useStorage.tsx              | 82.19   | 84.61    | 100     | 82.19   | 84-89,107-114                                                                                                       |
+| useSubscriptions.ts         | 100     | 94.33    | 100     | 100     | 172,203,227                                                                                                         |
+| useWalletCallbacks.ts       | 88.46   | 80       | 100     | 88.46   | 69-70,78-79,86-87                                                                                                   |
+| src/storage                 | 89.64   | 95.23    | 100     | 89.64   |                                                                                                                     |
+| GenericStringStorage.ts     | 100     | 100      | 100     | 100     |                                                                                                                     |
+| indexeddb.ts                | 84.55   | 88.88    | 100     | 84.55   | 100-101,131-136,140-141,166-167,182-190                                                                             |
+| localstorage.ts             | 89.03   | 98       | 100     | 89.03   | 56-57,79-83,163-167,185-189                                                                                         |
+| memory.ts                   | 100     | 100      | 100     | 100     |                                                                                                                     |
+| types.ts                    | 100     | 100      | 100     | 100     |                                                                                                                     |
+| src/types                   | 100     | 97.87    | 100     | 100     |                                                                                                                     |
+| callbacks.ts                | 100     | 100      | 100     | 100     |                                                                                                                     |
+| errors.ts                   | 100     | 96.77    | 100     | 100     | 317                                                                                                                 |
+| fhevm.ts                    | 0       | 0        | 0       | 0       |                                                                                                                     |
+| storage.ts                  | 0       | 0        | 0       | 0       |                                                                                                                     |
+| src/utils                   | 94.02   | 88.02    | 100     | 94.02   |                                                                                                                     |
+| debug.ts                    | 98.9    | 97.67    | 100     | 98.9    | 202,549-550                                                                                                         |
+| encryption.ts               | 72.93   | 60.41    | 100     | 72.93   | 60-69,80-88,102-103,107-119,128-129,135-136,200-202,216-217,220-221,310-311,314-316,319-321,324-326,341-344,360-363 |
+| errors.ts                   | 100     | 91.3     | 100     | 100     | 365,387                                                                                                             |
+| imageProcessor.ts           | 100     | 90.56    | 100     | 100     | 77,103,166                                                                                                          |
+| ipfs.ts                     | 86.53   | 83.67    | 100     | 86.53   | 56-58,122-125,152-155,175-178,193,209-213                                                                           |
+| retry.ts                    | 97.1    | 84.78    | 100     | 97.1    | 234-236,431-433                                                                                                     |
+| validation.ts               | 96.44   | 94.79    | 100     | 96.44   | 104-105,240-241,262-263,377-381                                                                                     |
 
 
 ### Increasing Coverage

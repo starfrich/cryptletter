@@ -75,18 +75,16 @@ export function Counter() {
    ↓
 2. FHEVM SDK (Core Logic)
    ↓
-3. React/Vue Components (UI Layer)
+3. React Components (UI Layer)
 ```
 
 ### Available Exports
 
 The SDK provides multiple entry points for different use cases:
 
-- `@fhevm-sdk` - Main entry (default React/Vue exports)
+- `@fhevm-sdk` - Main entry (default React exports)
 - `@fhevm-sdk/core` - Core utilities (no framework dependencies)
 - `@fhevm-sdk/react` - React hooks and components
-- `@fhevm-sdk/vue` - Vue 3 composables
-- `@fhevm-sdk/vanilla` - Vanilla JavaScript client
 - `@fhevm-sdk/storage` - Storage utilities (IndexedDB, localStorage)
 - `@fhevm-sdk/utils` - Validation, retry, error handling utilities
 - `@fhevm-sdk/types` - TypeScript type definitions
