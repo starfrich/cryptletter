@@ -343,12 +343,7 @@ export function CreatorProfile({ address: creatorAddress }: CreatorProfileProps)
           {/* Search & Filter Bar */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="text-sm text-base-content/60">
-              {newsletters.length > 0 && (
-                <span>
-                  <span className="font-semibold text-base-content">{newsletters.length}</span> newsletter
-                  {newsletters.length !== 1 ? "s" : ""} published
-                </span>
-              )}
+              Explore newsletters
             </div>
 
             {/* Search Input */}
@@ -563,6 +558,9 @@ function NewsletterPreviewWrapper({
     const dataArray = Array.isArray(newsletterData) ? newsletterData : Object.values(newsletterData as any);
     const [, , title, preview, , , creator] = dataArray as [string, bigint, string, string, bigint, boolean, string];
 
+    // Only add to map if this newsletter belongs to this creator
+    if (creator.toLowerCase() !== creatorAddress.toLowerCase()) return;
+
     setNewslettersWithData(prev => {
       // Only update if data doesn't exist or has changed
       const existing = prev.get(postId);
@@ -574,7 +572,7 @@ function NewsletterPreviewWrapper({
       newMap.set(postId, { title, preview, creator });
       return newMap;
     });
-  }, [newsletterData, postId, setNewslettersWithData]);
+  }, [newsletterData, postId, setNewslettersWithData, creatorAddress]);
 
   if (!newsletterData) return null;
 

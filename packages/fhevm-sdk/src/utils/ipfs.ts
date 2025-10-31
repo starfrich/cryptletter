@@ -69,15 +69,16 @@ export class IPFSClient {
     metadata?: { name?: string; keyValues?: Record<string, string | number> }
   ): Promise<IPFSUploadResponse> {
     try {
-      // Create File object from Uint8Array
-      const file = new File([encryptedData], metadata?.name || "encrypted-content.bin", {
+      // Use simple filename to avoid directory creation in IPFS
+      // Pinata creates directory structure from filename with special chars
+      const file = new File([encryptedData], "content.bin", {
         type: "application/octet-stream",
       });
 
-      // Upload to Pinata with proper type
+      // Upload to Pinata - metadata.name is for Pinata metadata only, not IPFS path
       const result = await this.pinata.upload.file(file as any, {
         metadata: metadata ? {
-          name: metadata.name,
+          name: metadata.name, // This is Pinata UI name, not IPFS filename
           keyValues: metadata.keyValues,
         } : undefined,
       });
@@ -109,10 +110,18 @@ export class IPFSClient {
 
     try {
       const url = `${this.gateway}/ipfs/${cid}`;
-      const response = await fetch(url);
+      const response = await fetch(url, { redirect: 'follow' });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Check if response is HTML (directory or error page)
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('text/html')) {
+        const text = await response.text();
+        console.error('[IPFS] Received HTML:', text.substring(0, 200));
+        throw new Error(`IPFS returned HTML instead of file. CID may be a directory or does not exist.`);
       }
 
       const arrayBuffer = await response.arrayBuffer();
