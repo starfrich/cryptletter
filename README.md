@@ -13,6 +13,7 @@ Substack, rebuilt with FHE. Every newsletter encrypted, every access verified on
 Try Cryptletter on **Sepolia testnet**:
 
 - **Live App**: [https://cryptletter.starfrich.me](https://cryptletter.starfrich.me)
+- **Website Docs**: [https://starfrich.me/docs/projects/cryptletter](https://starfrich.me/docs/projects/cryptletter)
 
 > **Requirements:**
 > - MetaMask or compatible Web3 wallet
