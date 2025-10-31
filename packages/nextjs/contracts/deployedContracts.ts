@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/helper/contract";
 const deployedContracts = {
   11155111: {
     Cryptletter: {
-      address: "0x321862AC3C5c0A6A8Ec169703C228c517C944bc2",
+      address: "0xA4085402AB6564f06218C963071FdBF489ebF197",
       abi: [
         {
           inputs: [],
@@ -783,7 +783,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 9517722,
+      deployedOnBlock: 9531813,
     },
   },
 } as const;
